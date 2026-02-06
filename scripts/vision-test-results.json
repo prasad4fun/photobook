@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-02-01T02:26:07.501918",
+  "image_source": "scripts/test-pattern.png",
+  "image_type": "png",
+  "total_tests": 5,
+  "success_count": 5,
+  "fail_count": 0,
+  "results": [
+    {
+      "model": "Claude Sonnet-4",
+      "success": true,
+      "response_time": 8826.84588432312,
+      "status_code": 200,
+      "response": "1. **What you see in the image (objects, people, scene):**  \n   The image contains five colored squares arranged in a grid-like pattern on a light gray background. The top row has three squares, and the bottom row has two squares. Above the squares, the text \"Test Pattern\" is visible.\n\n2. **Colors and composition:**  \n   - The squares in the top row are red (left), cyan (middle), and blue (right).  \n   - The squares in the bottom row are orange (left) and light green (right).  \n   - Each square ",
+      "tokens_used": 598
+    },
+    {
+      "model": "GPT 4o",
+      "success": true,
+      "response_time": 5846.302032470703,
+      "status_code": 200,
+      "response": "1. **What you see in the image (objects, people, scene):**  \n   The image contains five squares arranged in two rows. The top row has three squares, and the bottom row has two squares. Above the squares, there is text that reads \"Test Pattern.\" The squares are filled with different colors.\n\n2. **Colors and composition:**  \n   - The top row consists of squares in red, teal, and blue from left to right.  \n   - The bottom row consists of squares in orange and light green from left to right.  \n   - ",
+      "tokens_used": 600
+    },
+    {
+      "model": "GPT 4.1",
+      "success": true,
+      "response_time": 5477.16498374939,
+      "status_code": 200,
+      "response": "1. **What you see in the image:**\n   - The image contains five colored squares arranged in two rows. \n   - The top row has three squares, while the bottom row has two squares.\n   - Above the squares, there is text that reads \"Test Pattern.\"\n   - The squares are evenly spaced and have thin black borders.\n\n2. **Colors and composition:**\n   - The squares are in the following colors:\n     - Top row: Red (left), teal (middle), blue (right).\n     - Bottom row: Orange (left), light green (right).\n   - ",
+      "tokens_used": 600
+    },
+    {
+      "model": "Gemini 2.5 Pro",
+      "success": true,
+      "response_time": 9393.39303970337,
+      "status_code": 200,
+      "response": "1. **What you see in the image**:  \n   - The image contains five squares arranged in a grid-like pattern, with three squares in the top row and two squares in the bottom row.  \n   - Above the squares, there is text that reads \"Test Pattern.\"  \n\n2. **Colors and composition**:  \n   - The squares are filled with different colors:  \n     - Top row: red (left), teal (middle), and blue (right).  \n     - Bottom row: orange (left) and light green (right).  \n   - Each square has a black border, which pro",
+      "tokens_used": 627
+    },
+    {
+      "model": "Gemini 2.0 Flash",
+      "success": true,
+      "response_time": 8096.404790878296,
+      "status_code": 200,
+      "response": "1. **What you see in the image:**\n   - The image contains five colored squares arranged in two rows. \n   - The top row has three squares, and the bottom row has two squares.\n   - Above the squares, there is text that reads \"Test Pattern.\"\n\n2. **Colors and composition:**\n   - The squares are filled with distinct colors:\n     - Top row (from left to right): red, teal, and blue.\n     - Bottom row (from left to right): peach and light green.\n   - The squares are evenly spaced and outlined with a thi",
+      "tokens_used": 609
+    }
+  ]
+}

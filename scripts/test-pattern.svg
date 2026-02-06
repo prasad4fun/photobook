@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f0f0f0"/>
+
+  <!-- Colored squares -->
+  <rect x="50" y="50" width="80" height="80" fill="#FF6B6B" stroke="#000" stroke-width="2"/>
+  <rect x="160" y="50" width="80" height="80" fill="#4ECDC4" stroke="#000" stroke-width="2"/>
+  <rect x="270" y="50" width="80" height="80" fill="#45B7D1" stroke="#000" stroke-width="2"/>
+
+  <rect x="105" y="160" width="80" height="80" fill="#FFA07A" stroke="#000" stroke-width="2"/>
+  <rect x="215" y="160" width="80" height="80" fill="#98D8C8" stroke="#000" stroke-width="2"/>
+
+  <!-- Text -->
+  <text x="200" y="30" font-family="Arial" font-size="24" fill="#333" text-anchor="middle">
+    Test Pattern
+  </text>
+</svg>

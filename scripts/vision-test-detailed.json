@@ -1,0 +1,23 @@
+[
+  {
+    "model": "GPT 4o",
+    "baseline_works": true,
+    "baseline_response": "Hello! I am working.",
+    "vision_works": true,
+    "vision_response": "This image contains the following elements:\n\n1. **Text**:\n   - The text \"HELLO WOR\" is written in bold, black, uppercase letters. The font is clean and sans-serif.\n\n2. **Shapes**:\n   - A red circle is located above the \"H\" in \"HELLO.\" The circle has a black outline.\n   - A blue square is positioned near the \"R\" in \"WOR.\" The square also has a black outline.\n\n3. **Colors**:\n   - The background is white.\n   - The circle is filled with red and outlined in black.\n   - The square is filled with blue and outlined in black.\n   - The text is black.\n\nThe elements are spaced apart, with the shapes positioned near the text but not overlapping it."
+  },
+  {
+    "model": "Claude-Sonnet-4",
+    "baseline_works": true,
+    "baseline_response": "Hello! I am working.",
+    "vision_works": true,
+    "vision_response": "This image contains the following elements:\n\n1. **Text**: The phrase \"HELLO WOR\" is written in bold, black, uppercase letters. The font is clean and sans-serif.\n\n2. **Shapes**:\n   - A **red circle** with a black outline is located above and to the left of the text.\n   - A **blue square** with a black outline is located below and to the right of the text.\n\n3. **Colors**:\n   - The background is white.\n   - The text is black.\n   - The circle is red with a black outline.\n   - The square is blue with a black outline.\n\nThe elements are arranged in a simple, minimalistic layout. The red circle and blue square add a pop of color to the otherwise monochromatic text."
+  },
+  {
+    "model": "Gemini-2.5-pro",
+    "baseline_works": true,
+    "baseline_response": "Hello! I am working.",
+    "vision_works": true,
+    "vision_response": "This image contains the following elements:\n\n1. **Text**: The text \"HELLO WOR\" is written in bold, black, uppercase letters. The font is simple and sans-serif.\n\n2. **Shapes**:\n   - A **red circle** is located above the \"H\" in \"HELLO.\" The circle has a black outline.\n   - A **blue square** is positioned near the \"R\" in \"WOR.\" The square also has a black outline.\n\n3. **Colors**:\n   - The background is white.\n   - The text is black.\n   - The circle is red with a black outline.\n   - The square is blue with a black outline."
+  }
+]

@@ -1,0 +1,369 @@
+{
+  "endpoint": "https://midas.ai.bosch.com/ss1/api/v2/llm/completions",
+  "testQuery": {
+    "systemPrompt": "You are a helpful AI assistant. Respond concisely.",
+    "userMessage": "Say 'Hello! Model working.' in exactly those words.",
+    "expectedResponse": "Hello! Model working."
+  },
+  "models": {
+    "gpt": [
+      {
+        "name": "GPT 4o",
+        "deploymentName": "GPT 4o",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "GPT 4o",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "top_p": 0.7,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "GPT 4o Mini",
+        "deploymentName": "GPT 4o Mini",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "GPT 4o Mini",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "top_p": 0.7,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "GPT o1",
+        "deploymentName": "GPT o1",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "GPT o1",
+          "messages": [
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false
+        },
+        "note": "o1 models don't support system messages or temperature"
+      },
+      {
+        "name": "GPT o3 Mini",
+        "deploymentName": "GPT o3 Mini",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "GPT o3 Mini",
+          "messages": [
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false
+        },
+        "note": "o3 models don't support system messages or temperature"
+      },
+      {
+        "name": "GPT 4.1",
+        "deploymentName": "GPT 4.1",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "GPT 4.1",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "top_p": 0.7,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "GPT 4.1 Mini",
+        "deploymentName": "GPT 4.1 Mini",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "GPT 4.1 Mini",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "top_p": 0.7,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      }
+    ],
+    "llama": [
+      {
+        "name": "Llama 3.1",
+        "deploymentName": "Llama3.1",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "Llama3.1",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      }
+    ],
+    "gemini": [
+      {
+        "name": "Gemini 1.5 Flash",
+        "deploymentName": "Gemini-1.5-flash",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "Gemini-1.5-flash",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "Gemini 2.0 Flash",
+        "deploymentName": "Gemini-2.0-flash",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "Gemini-2.0-flash",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "Gemini 2.5 Pro",
+        "deploymentName": "Gemini-2.5-pro",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "Gemini-2.5-pro",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "Gemini 2.5 Flash",
+        "deploymentName": "Gemini-2.5-flash",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "Gemini-2.5-flash",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "Gemini 2.5 Flash Lite",
+        "deploymentName": "Gemini-2.5-flash-lite",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "Gemini-2.5-flash-lite",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "Gemini 2.5 Pro (OpenAI format)",
+        "deploymentName": "Gemini-2.5-pro-openai",
+        "format": "openai",
+        "samplePayload": {
+          "model": "Gemini-2.5-pro-openai",
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a helpful AI assistant."
+            },
+            {
+              "role": "user",
+              "content": "Hello"
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "Gemini 2.5 Flash (OpenAI format)",
+        "deploymentName": "Gemini-2.5-flash-openai",
+        "format": "openai",
+        "samplePayload": {
+          "model": "Gemini-2.5-flash-openai",
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a helpful AI assistant."
+            },
+            {
+              "role": "user",
+              "content": "Hello"
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "Gemini 2.5 Flash Lite (OpenAI format)",
+        "deploymentName": "Gemini-2.5-flash-lite-openai",
+        "format": "openai",
+        "samplePayload": {
+          "model": "Gemini-2.5-flash-lite-openai",
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a helpful AI assistant."
+            },
+            {
+              "role": "user",
+              "content": "Hello"
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      }
+    ],
+    "claude": [
+      {
+        "name": "Claude Sonnet 4",
+        "deploymentName": "Claude-Sonnet-4",
+        "format": "standard",
+        "samplePayload": {
+          "deploymentName": "Claude-Sonnet-4",
+          "messages": [
+            {
+              "role": "system",
+              "content": [{"type": "text", "text": "You are a helpful AI assistant."}]
+            },
+            {
+              "role": "user",
+              "content": [{"type": "text", "text": "Hello"}]
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      },
+      {
+        "name": "Claude Sonnet 4 (OpenAI format)",
+        "deploymentName": "Claude-Sonnet-4-openai",
+        "format": "openai",
+        "samplePayload": {
+          "model": "Claude-Sonnet-4-openai",
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a helpful AI assistant."
+            },
+            {
+              "role": "user",
+              "content": "Hello"
+            }
+          ],
+          "stream": false,
+          "temperature": 0.7,
+          "max_tokens": 100
+        }
+      }
+    ]
+  }
+}

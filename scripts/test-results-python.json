@@ -1,0 +1,161 @@
+{
+  "timestamp": "2026-02-01T00:47:09.213580",
+  "totalTests": 17,
+  "successCount": 17,
+  "failCount": 0,
+  "results": [
+    {
+      "model": "GPT 4o",
+      "deploymentName": "GPT 4o",
+      "format": "openai",
+      "success": true,
+      "responseTime": 2108,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "GPT 4o Mini",
+      "deploymentName": "GPT 4o Mini",
+      "format": "openai",
+      "success": true,
+      "responseTime": 1979,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "GPT o1",
+      "deploymentName": "GPT o1",
+      "format": "openai",
+      "success": true,
+      "responseTime": 1837,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "GPT o3 Mini",
+      "deploymentName": "GPT o3 Mini",
+      "format": "openai",
+      "success": true,
+      "responseTime": 1922,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "GPT 4.1",
+      "deploymentName": "GPT 4.1",
+      "format": "openai",
+      "success": true,
+      "responseTime": 5168,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "GPT 4.1 Mini",
+      "deploymentName": "GPT 4.1 Mini",
+      "format": "openai",
+      "success": true,
+      "responseTime": 2545,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Llama 3.1",
+      "deploymentName": "Llama3.1",
+      "format": "openai",
+      "success": true,
+      "responseTime": 1565,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Gemini 1.5 Flash",
+      "deploymentName": "Gemini-1.5-flash",
+      "format": "openai",
+      "success": true,
+      "responseTime": 2358,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Gemini 2.0 Flash",
+      "deploymentName": "Gemini-2.0-flash",
+      "format": "openai",
+      "success": true,
+      "responseTime": 1736,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Gemini 2.5 Pro",
+      "deploymentName": "Gemini-2.5-pro",
+      "format": "openai",
+      "success": true,
+      "responseTime": 2326,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Gemini 2.5 Flash",
+      "deploymentName": "Gemini-2.5-flash",
+      "format": "openai",
+      "success": true,
+      "responseTime": 1917,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Gemini 2.5 Flash Lite",
+      "deploymentName": "Gemini-2.5-flash-lite",
+      "format": "openai",
+      "success": true,
+      "responseTime": 1933,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Gemini 2.5 Pro (OpenAI format)",
+      "deploymentName": "Gemini-2.5-pro-openai",
+      "format": "openai",
+      "success": true,
+      "responseTime": 3249,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Gemini 2.5 Flash (OpenAI format)",
+      "deploymentName": "Gemini-2.5-flash-openai",
+      "format": "openai",
+      "success": true,
+      "responseTime": 2296,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Gemini 2.5 Flash Lite (OpenAI format)",
+      "deploymentName": "Gemini-2.5-flash-lite-openai",
+      "format": "openai",
+      "success": true,
+      "responseTime": 4715,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Claude Sonnet 4",
+      "deploymentName": "Claude-Sonnet-4",
+      "format": "openai",
+      "success": true,
+      "responseTime": 2454,
+      "statusCode": 200,
+      "response": ""
+    },
+    {
+      "model": "Claude Sonnet 4 (OpenAI format)",
+      "deploymentName": "Claude-Sonnet-4-openai",
+      "format": "openai",
+      "success": true,
+      "responseTime": 5778,
+      "statusCode": 200,
+      "response": ""
+    }
+  ]
+}

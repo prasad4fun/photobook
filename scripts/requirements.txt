@@ -1,0 +1,10 @@
+# Python dependencies for Midas API testing scripts
+
+# HTTP requests
+requests>=2.31.0
+
+# Environment variable loading from .env files
+python-dotenv>=1.0.0
+
+# Optional: For better CLI experience
+colorama>=0.4.6  # Cross-platform colored terminal output

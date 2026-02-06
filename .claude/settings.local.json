@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(grep:*)",
+      "Bash(killall node:*)",
+      "Bash(npm run build:*)",
+      "Bash(chmod:*)",
+      "Bash(python3:*)",
+      "Bash(npm start)",
+      "Bash(find:*)",
+      "Bash(xargs ls:*)",
+      "WebSearch",
+      "Bash(npm uninstall:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx playwright:*)",
+      "Bash(node:*)",
+      "Bash(tee:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:konvajs.org)",
+      "Bash(tree:*)",
+      "Bash(cd:*)",
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(xargs:*)",
+      "Bash(timeout 180 npm run build)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
