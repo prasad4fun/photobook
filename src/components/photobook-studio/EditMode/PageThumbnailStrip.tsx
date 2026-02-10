@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePhotoBookStore } from '../../../hooks/usePhotoBookStore';
 
 interface PageThumbnailStripProps {
@@ -17,8 +18,47 @@ export default function PageThumbnailStrip({
 
   if (!photoBook) return null;
 
+  // Calculate current page index and total pages
+  const currentPageIndex = photoBook.pages.findIndex((p) => p.id === currentPageId);
+  const totalPages = photoBook.pages.length;
+  const currentPageNumber = currentPageIndex !== -1 ? currentPageIndex + 1 : 1;
+
+  // Navigation handlers
+  const handlePreviousPage = () => {
+    if (currentPageIndex > 0) {
+      const previousPage = photoBook.pages[currentPageIndex - 1];
+      selectPage(previousPage.id);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPageIndex < totalPages - 1) {
+      const nextPage = photoBook.pages[currentPageIndex + 1];
+      selectPage(nextPage.id);
+    }
+  };
+
   return (
-    <div className="flex items-center gap-3 px-6 py-4 overflow-x-auto">
+    <div className="flex items-center gap-4 px-6 py-4 border-t border-slate-800 bg-slate-900/30">
+      {/* Previous Button */}
+      <button
+        onClick={handlePreviousPage}
+        disabled={currentPageIndex <= 0}
+        className="p-2 rounded-lg hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+        title="Previous Page (Alt+Left)"
+      >
+        <ChevronLeft size={20} />
+      </button>
+
+      {/* Page Indicator */}
+      <div className="px-4 py-2 bg-slate-800/50 rounded-lg text-center flex-shrink-0">
+        <span className="text-sm font-medium">
+          Page {currentPageNumber} / {totalPages}
+        </span>
+      </div>
+
+      {/* Page Thumbnails */}
+      <div className="flex items-center gap-3 overflow-x-auto flex-1">
       {photoBook.pages.map((page) => (
         <button
           key={page.id}
@@ -47,6 +87,17 @@ export default function PageThumbnailStrip({
           </div>
         </button>
       ))}
+      </div>
+
+      {/* Next Button */}
+      <button
+        onClick={handleNextPage}
+        disabled={currentPageIndex >= totalPages - 1}
+        className="p-2 rounded-lg hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+        title="Next Page (Alt+Right)"
+      >
+        <ChevronRight size={20} />
+      </button>
     </div>
   );
 }

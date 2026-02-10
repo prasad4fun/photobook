@@ -30,6 +30,7 @@ interface PhotoToolbarProps {
 export default function PhotoToolbar({ element, photo, pageId, onClose }: PhotoToolbarProps) {
   const updateElement = usePhotoBookStore((state) => state.updateElement);
   const deleteElements = usePhotoBookStore((state) => state.deleteElements);
+  const reorderElement = usePhotoBookStore((state) => state.reorderElement);
 
   const [showFramePicker, setShowFramePicker] = useState(false);
   const [showEffectPicker, setShowEffectPicker] = useState(false);
@@ -124,15 +125,11 @@ export default function PhotoToolbar({ element, photo, pageId, onClose }: PhotoT
 
   // Layer order handlers
   const handleBringForward = () => {
-    updateElement(pageId, element.id, {
-      zIndex: element.zIndex + 1,
-    });
+    reorderElement(pageId, element.id, 'forward');
   };
 
   const handleSendBackward = () => {
-    updateElement(pageId, element.id, {
-      zIndex: Math.max(0, element.zIndex - 1),
-    });
+    reorderElement(pageId, element.id, 'backward');
   };
 
   // Delete handler

@@ -16,6 +16,7 @@ interface ShapeToolbarProps {
 export default function ShapeToolbar({ element, pageId, onClose }: ShapeToolbarProps) {
   const updateElement = usePhotoBookStore((state) => state.updateElement);
   const deleteElements = usePhotoBookStore((state) => state.deleteElements);
+  const reorderElement = usePhotoBookStore((state) => state.reorderElement);
 
   const [showBorderSettings, setShowBorderSettings] = useState(false);
 
@@ -37,8 +38,7 @@ export default function ShapeToolbar({ element, pageId, onClose }: ShapeToolbarP
   };
 
   const handleLayerChange = (direction: 'forward' | 'backward') => {
-    const newZIndex = direction === 'forward' ? element.zIndex + 1 : Math.max(0, element.zIndex - 1);
-    updateElement(pageId, element.id, { zIndex: newZIndex });
+    reorderElement(pageId, element.id, direction);
   };
 
   const handleDelete = () => {

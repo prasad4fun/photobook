@@ -45,16 +45,19 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
   const spreadWidth = pageDimensions.width * 2 + spineWidth;
   const spreadHeight = pageDimensions.height;
 
+  // Get current page from store (ensures we have latest data)
+  const currentPage = photoBook?.pages.find((p) => p.id === page.id) || page;
+
   // Get adjacent page for spread
   const getAdjacentPage = (): StudioPage | null => {
     if (!photoBook) return null;
 
-    const currentIndex = photoBook.pages.findIndex((p) => p.id === page.id);
+    const currentIndex = photoBook.pages.findIndex((p) => p.id === currentPage.id);
     if (currentIndex === -1) return null;
 
     // If even page number (left side), show next page on right
     // If odd page number (right side), show previous page on left
-    const adjacentIndex = page.pageNumber % 2 === 0 ? currentIndex + 1 : currentIndex - 1;
+    const adjacentIndex = currentPage.pageNumber % 2 === 0 ? currentIndex + 1 : currentIndex - 1;
 
     return photoBook.pages[adjacentIndex] || null;
   };
@@ -62,8 +65,8 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
   const adjacentPage = getAdjacentPage();
 
   // Determine which page is left and which is right
-  const leftPage = page.pageNumber % 2 === 0 ? page : adjacentPage;
-  const rightPage = page.pageNumber % 2 === 0 ? adjacentPage : page;
+  const leftPage = currentPage.pageNumber % 2 === 0 ? currentPage : adjacentPage;
+  const rightPage = currentPage.pageNumber % 2 === 0 ? adjacentPage : currentPage;
 
   // Calculate scale to fit container
   const scale = Math.min(
@@ -153,9 +156,22 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
     e.preventDefault();
     setIsDragOver(false);
 
+    // Check if dropping a photo
     const photoId = e.dataTransfer.getData('photoId');
-    if (!photoId) return;
+    if (photoId) {
+      handlePhotoDrop(e, photoId);
+      return;
+    }
 
+    // Check if dropping a sticker
+    const stickerId = e.dataTransfer.getData('stickerId');
+    if (stickerId) {
+      handleStickerDrop(e, stickerId);
+      return;
+    }
+  };
+
+  const handlePhotoDrop = (e: React.DragEvent, photoId: string) => {
     const photo = selectedPhotos.find((p) => p.id === photoId);
     if (!photo) return;
 
@@ -224,6 +240,67 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
       };
 
       addElement(targetPage.id, photoElement);
+    }
+  };
+
+  const handleStickerDrop = (e: React.DragEvent, stickerId: string) => {
+    // Parse sticker data
+    const stickerDataString = e.dataTransfer.getData('application/sticker');
+    if (!stickerDataString) return;
+
+    try {
+      const stickerData = JSON.parse(stickerDataString);
+
+      // Get drop position relative to canvas
+      const container = e.currentTarget;
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Determine which page was dropped on
+      const isLeftSide = x < (scaledPageWidth + scaledSpineWidth / 2);
+      const targetPage = isLeftSide ? leftPage : rightPage;
+      if (!targetPage) return;
+
+      // Calculate position relative to page (accounting for spread offset)
+      const pageOffsetX = isLeftSide ? 0 : scaledPageWidth + scaledSpineWidth;
+      const relativeX = x - pageOffsetX;
+      const relativeY = y;
+
+      // Convert to stage coordinates
+      const stageX = relativeX / scale;
+      const stageY = relativeY / scale;
+
+      // Convert to percentage
+      const xPercent = (stageX / pageDimensions.width) * 100;
+      const yPercent = (stageY / pageDimensions.height) * 100;
+
+      // Default size for stickers
+      const defaultWidth = 15; // 15% of page width
+      const defaultHeight = 15;
+
+      // Center on drop point
+      const centeredX = Math.max(0, Math.min(xPercent - defaultWidth / 2, 100 - defaultWidth));
+      const centeredY = Math.max(0, Math.min(yPercent - defaultHeight / 2, 100 - defaultHeight));
+
+      const stickerElement = {
+        id: `sticker-${Date.now()}-${Math.random()}`,
+        type: 'sticker' as const,
+        stickerId: stickerData.id,
+        stickerUrl: stickerData.url,
+        x: centeredX,
+        y: centeredY,
+        width: defaultWidth,
+        height: defaultHeight,
+        rotation: 0,
+        zIndex: Date.now(),
+        flipHorizontal: false,
+        flipVertical: false,
+      };
+
+      addElement(targetPage.id, stickerElement);
+    } catch (error) {
+      console.error('Error parsing sticker data:', error);
     }
   };
 

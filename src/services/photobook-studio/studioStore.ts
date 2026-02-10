@@ -162,7 +162,18 @@ export const usePhotoBookStore = create<PhotoBookStore>()(
           const page = photoBook.pages.find((p) => p.id === pageId);
           if (!page) return state;
 
-          page.elements = [...page.elements, element];
+          // Calculate unique zIndex - always place new element on top
+          const maxZIndex = page.elements.length > 0
+            ? Math.max(...page.elements.map((e) => e.zIndex))
+            : 0;
+
+          // Create element with unique zIndex
+          const elementWithZIndex = {
+            ...element,
+            zIndex: maxZIndex + 1,
+          };
+
+          page.elements = [...page.elements, elementWithZIndex];
           photoBook.updatedAt = new Date();
 
           return { photoBook };
@@ -243,33 +254,88 @@ export const usePhotoBookStore = create<PhotoBookStore>()(
           if (!state.photoBook) return state;
 
           const photoBook = { ...state.photoBook };
-          const page = photoBook.pages.find((p) => p.id === pageId);
-          if (!page) return state;
+          const pageIndex = photoBook.pages.findIndex((p) => p.id === pageId);
+          if (pageIndex === -1) return state;
 
-          const element = page.elements.find((e) => e.id === elementId);
-          if (!element) return state;
+          // Deep clone the page to ensure immutability
+          const page = { ...photoBook.pages[pageIndex] };
+          page.elements = [...page.elements];
+          photoBook.pages = [...photoBook.pages];
+          photoBook.pages[pageIndex] = page;
 
-          const maxZIndex = Math.max(...page.elements.map((e) => e.zIndex));
-          const minZIndex = Math.min(...page.elements.map((e) => e.zIndex));
+          const elementIndex = page.elements.findIndex((e) => e.id === elementId);
+          if (elementIndex === -1) return state;
+
+          // Sort elements by zIndex to find proper neighbors
+          const sortedElements = [...page.elements].sort((a, b) => a.zIndex - b.zIndex);
+          const currentIndex = sortedElements.findIndex((e) => e.id === elementId);
+
+          if (currentIndex === -1) return state;
 
           switch (direction) {
             case 'front':
-              element.zIndex = maxZIndex + 1;
+              // Move to top - get highest zIndex + 1
+              const maxZIndex = Math.max(...page.elements.map((e) => e.zIndex), 0);
+              page.elements[elementIndex] = {
+                ...page.elements[elementIndex],
+                zIndex: maxZIndex + 1,
+              };
               break;
+
             case 'forward':
-              element.zIndex = Math.min(element.zIndex + 1, maxZIndex);
+              // Swap with element above (higher zIndex)
+              if (currentIndex < sortedElements.length - 1) {
+                const elementAbove = sortedElements[currentIndex + 1];
+                const aboveIndex = page.elements.findIndex((e) => e.id === elementAbove.id);
+
+                const currentZIndex = page.elements[elementIndex].zIndex;
+                const aboveZIndex = elementAbove.zIndex;
+
+                page.elements[elementIndex] = {
+                  ...page.elements[elementIndex],
+                  zIndex: aboveZIndex,
+                };
+                page.elements[aboveIndex] = {
+                  ...page.elements[aboveIndex],
+                  zIndex: currentZIndex,
+                };
+              }
               break;
+
             case 'backward':
-              element.zIndex = Math.max(element.zIndex - 1, minZIndex);
+              // Swap with element below (lower zIndex)
+              if (currentIndex > 0) {
+                const elementBelow = sortedElements[currentIndex - 1];
+                const belowIndex = page.elements.findIndex((e) => e.id === elementBelow.id);
+
+                const currentZIndex = page.elements[elementIndex].zIndex;
+                const belowZIndex = elementBelow.zIndex;
+
+                page.elements[elementIndex] = {
+                  ...page.elements[elementIndex],
+                  zIndex: belowZIndex,
+                };
+                page.elements[belowIndex] = {
+                  ...page.elements[belowIndex],
+                  zIndex: currentZIndex,
+                };
+              }
               break;
+
             case 'back':
-              element.zIndex = minZIndex - 1;
+              // Move to bottom - get lowest zIndex - 1
+              const minZIndex = Math.min(...page.elements.map((e) => e.zIndex), 0);
+              page.elements[elementIndex] = {
+                ...page.elements[elementIndex],
+                zIndex: minZIndex - 1,
+              };
               break;
           }
 
           photoBook.updatedAt = new Date();
           return { photoBook };
         });
+        get().saveSnapshot('Reordered element');
       },
 
       // Page Management

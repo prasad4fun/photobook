@@ -47,20 +47,25 @@ export default function PageDetailView({ features }: PageDetailViewProps) {
   };
 
   // Find selected element (if only one selected) - v2.0: Extended for all types
+  // Search across ALL pages since spread view shows multiple pages
   const selectedElement =
     selectedElementIds.length === 1
-      ? currentPage.elements.find((el) => el.id === selectedElementIds[0])
+      ? photoBook.pages
+          .flatMap((p) => p.elements.map((el) => ({ element: el, pageId: p.id })))
+          .find((item) => item.element.id === selectedElementIds[0])
       : undefined;
+
+  const selectedPageId = selectedElement?.pageId;
 
   // Determine element type
   const selectedStudioTextElement =
-    selectedElement?.type === 'text' ? (selectedElement as StudioTextElement) : undefined;
+    selectedElement?.element.type === 'text' ? (selectedElement.element as StudioTextElement) : undefined;
   const selectedStudioPhotoElement =
-    selectedElement?.type === 'photo' ? (selectedElement as StudioPhotoElement) : undefined;
+    selectedElement?.element.type === 'photo' ? (selectedElement.element as StudioPhotoElement) : undefined;
   const selectedStudioShapeElement =
-    selectedElement?.type === 'shape' ? (selectedElement as StudioShapeElement) : undefined;
+    selectedElement?.element.type === 'shape' ? (selectedElement.element as StudioShapeElement) : undefined;
   const selectedStudioStickerElement =
-    selectedElement?.type === 'sticker' ? (selectedElement as StudioStickerElement) : undefined;
+    selectedElement?.element.type === 'sticker' ? (selectedElement.element as StudioStickerElement) : undefined;
 
   // Get photo for PhotoToolbar
   const selectedPhoto = selectedStudioPhotoElement
@@ -106,40 +111,40 @@ export default function PageDetailView({ features }: PageDetailViewProps) {
       <PageControls currentPageId={currentPageId} />
 
       {/* v2.0: Contextual Toolbars - Appear based on selected element type */}
-      {selectedStudioPhotoElement && selectedPhoto && (
+      {selectedStudioPhotoElement && selectedPhoto && selectedPageId && (
         <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-20">
           <PhotoToolbar
             element={selectedStudioPhotoElement}
             photo={selectedPhoto}
-            pageId={currentPageId}
+            pageId={selectedPageId}
           />
         </div>
       )}
 
-      {selectedStudioShapeElement && features.enableShapes && (
+      {selectedStudioShapeElement && features.enableShapes && selectedPageId && (
         <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-20">
           <ShapeToolbar
             element={selectedStudioShapeElement}
-            pageId={currentPageId}
+            pageId={selectedPageId}
           />
         </div>
       )}
 
-      {selectedStudioStickerElement && features.enableStickers && (
+      {selectedStudioStickerElement && features.enableStickers && selectedPageId && (
         <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-20">
           <StickerToolbar
             element={selectedStudioStickerElement}
-            pageId={currentPageId}
+            pageId={selectedPageId}
           />
         </div>
       )}
 
       {/* Text Format Toolbar - Appears when text is selected */}
-      {selectedStudioTextElement && features.enableTextFormatting && (
+      {selectedStudioTextElement && features.enableTextFormatting && selectedPageId && (
         <TextFormatToolbar
           element={selectedStudioTextElement}
-          onUpdate={(updates) => updateElement(currentPageId, selectedStudioTextElement.id, updates)}
-          onDelete={() => deleteElements(currentPageId, [selectedStudioTextElement.id])}
+          onUpdate={(updates) => updateElement(selectedPageId, selectedStudioTextElement.id, updates)}
+          onDelete={() => deleteElements(selectedPageId, [selectedStudioTextElement.id])}
           position={{ x: 50, y: 150 }} // Fixed position for now
         />
       )}

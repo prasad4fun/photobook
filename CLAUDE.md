@@ -332,6 +332,8 @@ All types are in `src/types/index.ts` with `Studio` prefix:
 - `Cmd/Ctrl + Shift + Z` - Redo
 - `Delete` / `Backspace` - Delete selected elements
 - `Arrow Keys` - Nudge selected (1% per press, 10% with Shift)
+- `Alt + Left Arrow` - Previous page
+- `Alt + Right Arrow` - Next page
 - `Double Click Text` - Edit text content
 - `Cmd/Ctrl + Click` - Multi-select
 

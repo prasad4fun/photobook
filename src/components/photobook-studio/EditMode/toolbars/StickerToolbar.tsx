@@ -16,6 +16,7 @@ interface StickerToolbarProps {
 export default function StickerToolbar({ element, pageId, onClose }: StickerToolbarProps) {
   const updateElement = usePhotoBookStore((state) => state.updateElement);
   const deleteElements = usePhotoBookStore((state) => state.deleteElements);
+  const reorderElement = usePhotoBookStore((state) => state.reorderElement);
 
   const handleFlipHorizontal = () => {
     updateElement(pageId, element.id, {
@@ -30,8 +31,7 @@ export default function StickerToolbar({ element, pageId, onClose }: StickerTool
   };
 
   const handleLayerChange = (direction: 'forward' | 'backward') => {
-    const newZIndex = direction === 'forward' ? element.zIndex + 1 : Math.max(0, element.zIndex - 1);
-    updateElement(pageId, element.id, { zIndex: newZIndex });
+    reorderElement(pageId, element.id, direction);
   };
 
   const handleDelete = () => {

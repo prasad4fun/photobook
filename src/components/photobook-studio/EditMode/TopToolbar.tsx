@@ -2,7 +2,7 @@
  * Top Toolbar - Save, undo/redo, and actions
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save, X, Undo, Redo, Book, Download } from 'lucide-react';
 import { usePhotoBookStore } from '../../../hooks/usePhotoBookStore';
 import { downloadJSON } from '../../../services/photobook-studio/exportService';
@@ -25,7 +25,28 @@ export default function TopToolbar({
   onRedo,
 }: TopToolbarProps) {
   const photoBook = usePhotoBookStore((state) => state.photoBook);
+  const currentPageId = usePhotoBookStore((state) => state.currentPageId);
+  const selectPage = usePhotoBookStore((state) => state.selectPage);
   const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // Calculate current page index and total pages (for keyboard shortcuts)
+  const currentPageIndex = photoBook?.pages.findIndex((p) => p.id === currentPageId) ?? -1;
+  const totalPages = photoBook?.pages.length ?? 0;
+
+  // Navigation handlers for keyboard shortcuts
+  const handlePreviousPage = () => {
+    if (photoBook && currentPageIndex > 0) {
+      const previousPage = photoBook.pages[currentPageIndex - 1];
+      selectPage(previousPage.id);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (photoBook && currentPageIndex < totalPages - 1) {
+      const nextPage = photoBook.pages[currentPageIndex + 1];
+      selectPage(nextPage.id);
+    }
+  };
 
   const handleExportJSON = () => {
     if (photoBook) {
@@ -33,6 +54,30 @@ export default function TopToolbar({
       setShowExportMenu(false);
     }
   };
+
+  // Keyboard shortcuts for page navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle if not in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Alt/Option + Arrow keys for page navigation (to avoid conflict with element nudging)
+      if (e.altKey) {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          handlePreviousPage();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          handleNextPage();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentPageIndex, totalPages, photoBook]);
 
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">

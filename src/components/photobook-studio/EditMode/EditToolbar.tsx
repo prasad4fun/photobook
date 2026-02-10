@@ -10,6 +10,8 @@ import { usePhotoBookStore } from '../../../hooks/usePhotoBookStore';
 import { generateId } from '../../../utils/photobook-studio/helpers';
 import LayoutPickerModal from './LayoutPickerModal';
 import ShapePicker from './ShapePicker';
+import StickerPicker from './StickerPicker';
+import type { StickerItem } from '../../../data/stickerLibrary';
 
 interface EditToolbarProps {
   features: PhotoBookStudioFeatures;
@@ -20,6 +22,7 @@ export default function EditToolbar({ features, pageId }: EditToolbarProps) {
   const addElement = usePhotoBookStore((state) => state.addElement);
   const [showLayoutPicker, setShowLayoutPicker] = useState(false);
   const [showShapePicker, setShowShapePicker] = useState(false); // v2.0
+  const [showStickerPicker, setShowStickerPicker] = useState(false);
 
   const handleAddText = () => {
     const textElement = {
@@ -66,8 +69,27 @@ export default function EditToolbar({ features, pageId }: EditToolbarProps) {
 
   const handleAddSticker = () => {
     if (!features.enableStickers) return;
-    // TODO: Show sticker picker
-    alert('Sticker picker will be implemented');
+    setShowStickerPicker(true);
+  };
+
+  const handleStickerSelect = (sticker: StickerItem) => {
+    // Create sticker element at center of page
+    const stickerElement = {
+      id: generateId('sticker'),
+      type: 'sticker' as const,
+      stickerId: sticker.id,
+      stickerUrl: sticker.url,
+      x: 35, // Center-ish
+      y: 35,
+      width: 15, // 15% of page width
+      height: 15,
+      rotation: 0,
+      zIndex: 100, // Place on top
+      flipHorizontal: false,
+      flipVertical: false,
+    };
+    addElement(pageId, stickerElement);
+    setShowStickerPicker(false);
   };
 
   return (
@@ -143,6 +165,14 @@ export default function EditToolbar({ features, pageId }: EditToolbarProps) {
         <ShapePicker
           onShapeSelect={handleShapeSelect}
           onClose={() => setShowShapePicker(false)}
+        />
+      )}
+
+      {/* Sticker Picker Modal */}
+      {showStickerPicker && (
+        <StickerPicker
+          onStickerSelect={handleStickerSelect}
+          onClose={() => setShowStickerPicker(false)}
         />
       )}
     </div>
