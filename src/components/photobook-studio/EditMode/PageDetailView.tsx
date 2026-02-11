@@ -1,18 +1,17 @@
 /**
  * Page Detail View - Full page editing with canvas
- * v2.0 - Added contextual toolbars
+ * Pixory-style: vertical side toolbars, no horizontal toolbar, light background
  */
 
 import React from 'react';
 import { usePhotoBookStore } from '../../../hooks/usePhotoBookStore';
 import { PhotoBookStudioFeatures, StudioTextElement, StudioPhotoElement, StudioShapeElement, StudioStickerElement } from '../../../types';
 import PageSpreadCanvas from './PageSpreadCanvas';
-import EditToolbar from './EditToolbar';
+import CanvasSideToolbar from './CanvasSideToolbar';
 import PageThumbnailStrip from './PageThumbnailStrip';
 import PageControls from './PageControls';
 import TextFormatToolbar from './canvas/TextFormatToolbar';
 import { PhotoToolbar, ShapeToolbar, StickerToolbar } from './toolbars';
-import { ArrowLeft } from 'lucide-react';
 
 interface PageDetailViewProps {
   features: PhotoBookStudioFeatures;
@@ -37,16 +36,12 @@ export default function PageDetailView({ features }: PageDetailViewProps) {
   if (!currentPage) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-slate-400">Page not found</p>
+        <p className="text-gray-400">Page not found</p>
       </div>
     );
   }
 
-  const handleBackToThumbnails = () => {
-    selectPage(null as any); // Clear selection to go back
-  };
-
-  // Find selected element (if only one selected) - v2.0: Extended for all types
+  // Find selected element (if only one selected)
   // Search across ALL pages since spread view shows multiple pages
   const selectedElement =
     selectedElementIds.length === 1
@@ -73,46 +68,36 @@ export default function PageDetailView({ features }: PageDetailViewProps) {
     : undefined;
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-950 relative">
-      {/* Top Bar - Back button and page info */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900/50">
-        <button
-          onClick={handleBackToThumbnails}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors"
-        >
-          <ArrowLeft size={18} />
-          Back to All Pages
-        </button>
-
-        <div className="text-center">
-          <h3 className="text-sm font-semibold">
-            Page {currentPage.pageNumber}
-          </h3>
-          <p className="text-xs text-slate-400 capitalize">{currentPage.type}</p>
+    <div className="flex-1 flex flex-col bg-gray-100 relative min-h-0 overflow-hidden">
+      {/* Main Canvas Area with Side Toolbars */}
+      <div className="flex-1 flex min-h-0 overflow-hidden">
+        {/* Left Side Toolbar */}
+        <div className="flex-shrink-0 flex items-center">
+          <CanvasSideToolbar features={features} pageId={currentPageId} side="left" />
         </div>
 
-        <div className="w-32" /> {/* Spacer for centering */}
+        {/* Canvas */}
+        <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+          <PageSpreadCanvas page={currentPage} />
+        </div>
+
+        {/* Right Side Toolbar - hidden on small screens */}
+        <div className="flex-shrink-0 hidden md:flex items-center">
+          <CanvasSideToolbar features={features} pageId={currentPageId} side="right" />
+        </div>
       </div>
 
-      {/* Edit Toolbar */}
-      <EditToolbar features={features} pageId={currentPageId} />
-
-      {/* Main Canvas Area - Spread View */}
-      <div className="flex-1 flex items-center justify-center p-8 overflow-hidden bg-slate-900/30">
-        <PageSpreadCanvas page={currentPage} />
-      </div>
-
-      {/* Bottom Strip - Page Thumbnails */}
-      <div className="border-t border-slate-800 bg-slate-900/50">
+      {/* Bottom Strip - Spread Thumbnails */}
+      <div className="flex-shrink-0">
         <PageThumbnailStrip currentPageId={currentPageId} />
       </div>
 
       {/* Page Controls - Bottom Right */}
       <PageControls currentPageId={currentPageId} />
 
-      {/* v2.0: Contextual Toolbars - Appear based on selected element type */}
+      {/* Contextual Toolbars - Appear based on selected element type */}
       {selectedStudioPhotoElement && selectedPhoto && selectedPageId && (
-        <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-20">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
           <PhotoToolbar
             element={selectedStudioPhotoElement}
             photo={selectedPhoto}
@@ -122,7 +107,7 @@ export default function PageDetailView({ features }: PageDetailViewProps) {
       )}
 
       {selectedStudioShapeElement && features.enableShapes && selectedPageId && (
-        <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-20">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
           <ShapeToolbar
             element={selectedStudioShapeElement}
             pageId={selectedPageId}
@@ -131,7 +116,7 @@ export default function PageDetailView({ features }: PageDetailViewProps) {
       )}
 
       {selectedStudioStickerElement && features.enableStickers && selectedPageId && (
-        <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-20">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
           <StickerToolbar
             element={selectedStudioStickerElement}
             pageId={selectedPageId}
@@ -145,7 +130,7 @@ export default function PageDetailView({ features }: PageDetailViewProps) {
           element={selectedStudioTextElement}
           onUpdate={(updates) => updateElement(selectedPageId, selectedStudioTextElement.id, updates)}
           onDelete={() => deleteElements(selectedPageId, [selectedStudioTextElement.id])}
-          position={{ x: 50, y: 150 }} // Fixed position for now
+          position={{ x: 50, y: 150 }}
         />
       )}
     </div>

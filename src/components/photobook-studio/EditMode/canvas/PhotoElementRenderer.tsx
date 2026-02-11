@@ -73,6 +73,32 @@ export default function PhotoElementRenderer({
     const centerY = y + height / 2;
     const lineWidth = 8;
 
+    // Handler for placeholder resize (same logic as photo resize)
+    const handlePlaceholderTransformEnd = (e: any) => {
+      const node = e.target;
+      const scaleX = node.scaleX();
+      const scaleY = node.scaleY();
+
+      // Convert scaled dimensions back to percentages
+      const newWidth = (node.width() * scaleX / pageDimensions.width) * 100;
+      const newHeight = (node.height() * scaleY / pageDimensions.height) * 100;
+      const newX = (node.x() / pageDimensions.width) * 100;
+      const newY = (node.y() / pageDimensions.height) * 100;
+
+      // Update element with new dimensions
+      onTransform({
+        x: newX,
+        y: newY,
+        width: newWidth,
+        height: newHeight,
+        rotation: node.rotation(),
+      });
+
+      // Reset scale to 1 (standard Konva pattern)
+      node.scaleX(1);
+      node.scaleY(1);
+    };
+
     return (
       <Group>
         {/* Placeholder box */}
@@ -98,6 +124,7 @@ export default function PhotoElementRenderer({
               y: (node.y() / pageDimensions.height) * 100,
             });
           }}
+          onTransformEnd={handlePlaceholderTransformEnd}
           shadowColor={isSelected ? '#8b5cf6' : undefined}
           shadowBlur={isSelected ? 10 : 0}
           shadowOpacity={isSelected ? 0.8 : 0}

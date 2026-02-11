@@ -8,6 +8,7 @@ import type {
   StudioPhotoBookConfig,
   StudioPage,
   StudioPhotoElement,
+  StudioTextElement,
   StudioLayoutTemplate,
   StudioPhotoSlot,
 } from '../../types';
@@ -46,22 +47,44 @@ export function generatePhotoBook(
  */
 function createCoverPage(coverPhoto: StudioPhoto, config: StudioPhotoBookConfig): StudioPage {
   const coverLayout = getLayoutTemplate('cover-single');
-  const elements: StudioPhotoElement[] = [];
+  const elements: (StudioPhotoElement | StudioTextElement)[] = [];
 
+  // Add title text element at top center
+  const titleElement: StudioTextElement = {
+    id: `element-text-${Date.now()}`,
+    type: 'text',
+    content: 'Enter title',
+    x: 25,            // Centered: 25% from left
+    y: 5,             // 5% from top
+    width: 50,        // 50% of page width
+    height: 15,       // 15% of page height
+    fontSize: 504.17, // 121pt at 300 DPI
+    fontFamily: 'Londrina Solid',
+    fontWeight: '900',
+    fontStyle: 'normal',
+    textAlign: 'center',
+    color: '#000000',
+    lineHeight: 1.2,
+    rotation: 0,
+    zIndex: 100,
+  };
+  elements.push(titleElement);
+
+  // Add photo placeholder below title (70% height, centered)
   if (coverPhoto && coverLayout.photoSlots.length > 0) {
-    const slot = coverLayout.photoSlots[0];
-    elements.push({
+    const photoElement: StudioPhotoElement = {
       id: `element-${Date.now()}-0`,
       type: 'photo',
       photoId: coverPhoto.id,
-      x: slot.x,
-      y: slot.y,
-      width: slot.width,
-      height: slot.height,
+      x: 15,            // Centered: 15% from left
+      y: 20,            // 20% from top (below title)
+      width: 70,        // 70% of page width
+      height: 70,       // 70% of page height
       rotation: 0,
-      zIndex: 1,
-      slotId: slot.id,
-    });
+      zIndex: 50,       // Below text (zIndex 100)
+      slotId: coverLayout.photoSlots[0].id,
+    };
+    elements.push(photoElement);
   }
 
   return {
@@ -139,15 +162,92 @@ function createContentPages(photos: StudioPhoto[], config: StudioPhotoBookConfig
  * Create back cover page
  */
 function createBackPage(config: StudioPhotoBookConfig): StudioPage {
+  // Create 2x2 grid layout for 4 photos (covering top 60% of page)
+  const backCoverTemplate: StudioLayoutTemplate = {
+    photoSlots: [
+      // Top-left photo
+      {
+        id: 'back-slot-1',
+        x: 15,        // 15% from left
+        y: 10,        // 10% from top
+        width: 32,    // 32% width (with 3% gaps)
+        height: 25,   // 25% height
+        zIndex: 1,
+      },
+      // Top-right photo
+      {
+        id: 'back-slot-2',
+        x: 50,        // 15 + 32 + 3 = 50%
+        y: 10,
+        width: 32,
+        height: 25,
+        zIndex: 1,
+      },
+      // Bottom-left photo
+      {
+        id: 'back-slot-3',
+        x: 15,
+        y: 38,        // 10 + 25 + 3 = 38%
+        width: 32,
+        height: 25,
+        zIndex: 1,
+      },
+      // Bottom-right photo
+      {
+        id: 'back-slot-4',
+        x: 50,
+        y: 38,
+        width: 32,
+        height: 25,
+        zIndex: 1,
+      },
+    ],
+  };
+
+  // Create 4 empty photo placeholder elements
+  const photoElements: StudioPhotoElement[] = backCoverTemplate.photoSlots.map((slot, idx) => ({
+    id: `element-${Date.now()}-${idx}`,
+    type: 'photo',
+    photoId: undefined,  // Empty placeholder
+    x: slot.x,
+    y: slot.y,
+    width: slot.width,
+    height: slot.height,
+    rotation: 0,
+    zIndex: slot.zIndex,
+    slotId: slot.id,
+  }));
+
+  // Caption text element below photos
+  const currentYear = new Date().getFullYear();
+  const captionElement: StudioTextElement = {
+    id: `element-text-${Date.now()}`,
+    type: 'text',
+    content: 'Enter caption',  // Placeholder for user to edit
+    x: 25,            // Centered: 25% from left
+    y: 70,            // 70% from top (below photo grid at 63%)
+    width: 50,        // 50% of page width
+    height: 15,       // 15% of page height
+    fontSize: 208.33, // 50pt at 300 DPI
+    fontFamily: 'Londrina Solid',
+    fontWeight: '900',
+    fontStyle: 'normal',
+    textAlign: 'center',
+    color: '#000000',
+    lineHeight: 1.2,
+    rotation: 0,
+    zIndex: 100,
+  };
+
   return {
     id: 'page-back',
     pageNumber: 999, // Will be renumbered
     type: 'back-cover',
-    elements: [],
+    elements: [...photoElements, captionElement],  // 4 photos + caption
     layout: {
-      id: 'back-empty',
-      name: 'Back Cover',
-      template: { photoSlots: [] },
+      id: 'back-grid-4',
+      name: '4 Photo Grid',
+      template: backCoverTemplate,
     },
     background: {
       type: 'color',

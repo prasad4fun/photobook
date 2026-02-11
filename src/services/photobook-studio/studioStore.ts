@@ -15,6 +15,7 @@ import type {
   StudioPhotoElement,
   StudioPhotoBookConfig,
   StudioPageLayout,
+  LeftPanelView,
 } from '../../types';
 import {
   STUDIO_DEFAULT_PAGE_CONFIG,
@@ -38,6 +39,7 @@ interface PhotoBookStore extends PhotoBookEditorState {
   setHoveredPage: (pageId: string | null) => void;
   selectElements: (elementIds: string[], append?: boolean) => void;
   clearSelection: () => void;
+  setLeftPanelView: (view: LeftPanelView) => void;
 
   // Actions - Element Management
   addElement: (pageId: string, element: StudioPageElement) => void;
@@ -63,6 +65,11 @@ interface PhotoBookStore extends PhotoBookEditorState {
   canUndo: () => boolean;
   canRedo: () => boolean;
 
+  // Actions - Spine & Navigation
+  updateSpineTitle: (title: string) => void;
+  setCurrentSpreadIndex: (index: number) => void;
+  setZoomLevel: (level: number) => void;
+
   // Actions - Reset
   reset: () => void;
 }
@@ -78,6 +85,9 @@ const initialState: PhotoBookEditorState = {
   clipboard: null,
   history: [],
   historyIndex: -1,
+  leftPanelView: 'photos',
+  currentSpreadIndex: 0,
+  zoomLevel: 100,
 };
 
 export const usePhotoBookStore = create<PhotoBookStore>()(
@@ -111,6 +121,7 @@ export const usePhotoBookStore = create<PhotoBookStore>()(
         }
 
         const photoBook = generatePhotoBook(state.selectedPhotos, STUDIO_DEFAULT_PAGE_CONFIG);
+        photoBook.spineTitle = 'My PhotoBook';
         set({
           photoBook,
           mode: 'edit',
@@ -151,6 +162,10 @@ export const usePhotoBookStore = create<PhotoBookStore>()(
 
       clearSelection: () => {
         set({ selectedElementIds: [] });
+      },
+
+      setLeftPanelView: (view) => {
+        set({ leftPanelView: view });
       },
 
       // Element Management
@@ -567,6 +582,25 @@ export const usePhotoBookStore = create<PhotoBookStore>()(
       },
 
       // Reset
+      // Spine & Navigation Actions
+      updateSpineTitle: (title) => {
+        set((state) => {
+          if (!state.photoBook) return state;
+          return {
+            photoBook: { ...state.photoBook, spineTitle: title, updatedAt: new Date() },
+          };
+        });
+        get().saveSnapshot('Updated spine title');
+      },
+
+      setCurrentSpreadIndex: (index) => {
+        set({ currentSpreadIndex: index });
+      },
+
+      setZoomLevel: (level) => {
+        set({ zoomLevel: level });
+      },
+
       reset: () => {
         set(initialState);
       },

@@ -5,7 +5,7 @@
 import React from 'react';
 import { usePhotoBookStore } from '../../hooks/usePhotoBookStore';
 import { PhotoBookStudioFeatures } from '../../types';
-import SourcePhotosPanel from './EditMode/SourcePhotosPanel';
+import LeftPanel from './EditMode/LeftPanel';
 import PageThumbnailView from './EditMode/PageThumbnailView';
 import PageDetailView from './EditMode/PageDetailView';
 import TopToolbar from './EditMode/TopToolbar';
@@ -35,7 +35,7 @@ export default function EditMode({ features, onSave, onCancel }: EditModeProps) 
   const isDetailView = currentPageId !== null;
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col overflow-hidden">
       {/* Top Toolbar */}
       <TopToolbar
         onSave={onSave}
@@ -47,12 +47,12 @@ export default function EditMode({ features, onSave, onCancel }: EditModeProps) 
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - Source Photos */}
-        <SourcePhotosPanel />
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* Left Panel - Photos / Layouts / Stickers / Shapes */}
+        <LeftPanel features={features} pageId={currentPageId || ''} />
 
         {/* Right Panel - Page View */}
-        <div className="flex-1 flex flex-col">
+        <div className={`flex-1 flex flex-col min-h-0 min-w-0 ${isDetailView ? 'bg-gray-100' : ''}`}>
           {isDetailView ? (
             <PageDetailView features={features} />
           ) : (

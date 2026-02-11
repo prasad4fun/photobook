@@ -443,41 +443,58 @@ function redistributeSlots(slotCount: number): StudioPhotoSlot[] {
 
     case 6:
       // 3x2 equal grid
-      for (let row = 0; row < 2; row++) {
-        for (let col = 0; col < 3; col++) {
+      {
+        const columns = 3;
+        const rows = 2;
+        const slotWidth = (100 - (columns + 1) * gap) / columns;
+        const slotHeight = (100 - (rows + 1) * gap) / rows;
+
+        for (let i = 0; i < 6; i++) {
+          const col = i % columns;
+          const row = Math.floor(i / columns);
           newSlots.push({
             id: generateId('slot'),
-            x: gap + col * (33.33 + 0.33 * gap),
-            y: gap + row * (50 + 0.5 * gap),
-            width: 33.33 - 1.33 * gap,
-            height: 50 - 1.5 * gap,
-            zIndex: row * 3 + col,
+            x: gap + col * (slotWidth + gap),
+            y: gap + row * (slotHeight + gap),
+            width: slotWidth,
+            height: slotHeight,
+            zIndex: i,
           });
         }
       }
       break;
 
     case 7:
-      // Not specified in images - using sensible default: large top + 2x3 bottom grid
-      newSlots.push(
-        {
+      // Large top photo + 6 smaller photos (2x3 grid)
+      {
+        // Top large photo
+        newSlots.push({
           id: generateId('slot'),
           x: gap,
           y: gap,
           width: 100 - 2 * gap,
-          height: 50 - 1.5 * gap,
+          height: 45,
           zIndex: 0,
-        }
-      );
-      for (let row = 0; row < 2; row++) {
-        for (let col = 0; col < 3; col++) {
+        });
+
+        // Bottom grid (2x3)
+        const columns = 3;
+        const rows = 2;
+        const gridStartY = 50;
+        const gridHeight = 50 - gap; // Remaining height minus bottom margin
+        const slotWidth = (100 - (columns + 1) * gap) / columns;
+        const slotHeight = (gridHeight - (rows + 1) * gap) / rows;
+
+        for (let i = 0; i < 6; i++) {
+          const col = i % columns;
+          const row = Math.floor(i / columns);
           newSlots.push({
             id: generateId('slot'),
-            x: gap + col * (33.33 + 0.33 * gap),
-            y: 50 + 0.5 * gap + row * (25 + 0.5 * gap),
-            width: 33.33 - 1.33 * gap,
-            height: 25 - 1.25 * gap,
-            zIndex: row * 3 + col + 1,
+            x: gap + col * (slotWidth + gap),
+            y: gridStartY + gap + row * (slotHeight + gap),
+            width: slotWidth,
+            height: slotHeight,
+            zIndex: i + 1,
           });
         }
       }
@@ -485,15 +502,22 @@ function redistributeSlots(slotCount: number): StudioPhotoSlot[] {
 
     case 8:
       // 4x2 equal grid
-      for (let row = 0; row < 2; row++) {
-        for (let col = 0; col < 4; col++) {
+      {
+        const columns = 4;
+        const rows = 2;
+        const slotWidth = (100 - (columns + 1) * gap) / columns;
+        const slotHeight = (100 - (rows + 1) * gap) / rows;
+
+        for (let i = 0; i < 8; i++) {
+          const col = i % columns;
+          const row = Math.floor(i / columns);
           newSlots.push({
             id: generateId('slot'),
-            x: gap + col * (25 + 0.25 * gap),
-            y: gap + row * (50 + 0.5 * gap),
-            width: 25 - 1.25 * gap,
-            height: 50 - 1.5 * gap,
-            zIndex: row * 4 + col,
+            x: gap + col * (slotWidth + gap),
+            y: gap + row * (slotHeight + gap),
+            width: slotWidth,
+            height: slotHeight,
+            zIndex: i,
           });
         }
       }
@@ -501,15 +525,22 @@ function redistributeSlots(slotCount: number): StudioPhotoSlot[] {
 
     case 9:
       // 3x3 equal grid
-      for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 3; col++) {
+      {
+        const columns = 3;
+        const rows = 3;
+        const slotWidth = (100 - (columns + 1) * gap) / columns;
+        const slotHeight = (100 - (rows + 1) * gap) / rows;
+
+        for (let i = 0; i < 9; i++) {
+          const col = i % columns;
+          const row = Math.floor(i / columns);
           newSlots.push({
             id: generateId('slot'),
-            x: gap + col * (33.33 + 0.33 * gap),
-            y: gap + row * (33.33 + 0.33 * gap),
-            width: 33.33 - 1.33 * gap,
-            height: 33.33 - 1.33 * gap,
-            zIndex: row * 3 + col,
+            x: gap + col * (slotWidth + gap),
+            y: gap + row * (slotHeight + gap),
+            width: slotWidth,
+            height: slotHeight,
+            zIndex: i,
           });
         }
       }
@@ -642,4 +673,13 @@ export function createSpreads(pages: StudioPage[]): StudioSpread[] {
   }
 
   return spreads;
+}
+
+/**
+ * Find spread index containing a specific page
+ */
+export function findSpreadIndexForPage(spreads: StudioSpread[], pageId: string): number {
+  return spreads.findIndex(
+    (s) => s.leftPage?.id === pageId || s.rightPage?.id === pageId
+  );
 }

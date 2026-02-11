@@ -2,10 +2,11 @@
 /**
  * Page Spread Canvas - Double-sided page view with center binding
  * Shows left and right pages like a physical photobook
+ * Pixory-style: light workspace, book-like appearance, editable cover spine
  */
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Stage, Layer, Rect, Group } from 'react-konva';
+import { Stage, Layer, Rect, Group, Text as KonvaText } from 'react-konva';
 import Konva from 'konva';
 import type { StudioPage, StudioTextElement } from '../../../types';
 import { usePhotoBookStore } from '../../../hooks/usePhotoBookStore';
@@ -21,10 +22,12 @@ interface PageSpreadCanvasProps {
 
 export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
   const stageRef = useRef<Konva.Stage>(null);
-  const [containerSize, setContainerSize] = useState({ width: 1600, height: 900 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ width: 800, height: 500 });
   const [isDragOver, setIsDragOver] = useState(false);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [activePageSide, setActivePageSide] = useState<'left' | 'right'>('right');
+  const [editingSpineTitle, setEditingSpineTitle] = useState(false);
 
   const photoBook = usePhotoBookStore((state) => state.photoBook);
   const selectedPhotos = usePhotoBookStore((state) => state.selectedPhotos);
@@ -34,16 +37,14 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
   const updateElement = usePhotoBookStore((state) => state.updateElement);
   const deleteElements = usePhotoBookStore((state) => state.deleteElements);
   const addElement = usePhotoBookStore((state) => state.addElement);
+  const spineTitle = usePhotoBookStore((state) => state.photoBook?.spineTitle);
+  const updateSpineTitle = usePhotoBookStore((state) => state.updateSpineTitle);
+  const setZoomLevel = usePhotoBookStore((state) => state.setZoomLevel);
 
   // Get page dimensions (single page)
   const pageDimensions = photoBook
     ? getPageDimensions(photoBook.config)
     : { width: 2480, height: 3508 };
-
-  // Spread dimensions (two pages + spine)
-  const spineWidth = 100; // Center binding width
-  const spreadWidth = pageDimensions.width * 2 + spineWidth;
-  const spreadHeight = pageDimensions.height;
 
   // Get current page from store (ensures we have latest data)
   const currentPage = photoBook?.pages.find((p) => p.id === page.id) || page;
@@ -55,8 +56,6 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
     const currentIndex = photoBook.pages.findIndex((p) => p.id === currentPage.id);
     if (currentIndex === -1) return null;
 
-    // If even page number (left side), show next page on right
-    // If odd page number (right side), show previous page on left
     const adjacentIndex = currentPage.pageNumber % 2 === 0 ? currentIndex + 1 : currentIndex - 1;
 
     return photoBook.pages[adjacentIndex] || null;
@@ -68,32 +67,52 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
   const leftPage = currentPage.pageNumber % 2 === 0 ? currentPage : adjacentPage;
   const rightPage = currentPage.pageNumber % 2 === 0 ? adjacentPage : currentPage;
 
-  // Calculate scale to fit container
+  // Determine if this is a cover spread
+  const isCoverSpread =
+    (leftPage?.type === 'back-cover' && rightPage?.type === 'cover') ||
+    (leftPage?.type === 'back-cover' && !rightPage) ||
+    (!leftPage && rightPage?.type === 'cover');
+
+  // Dynamic spine width: wider for cover spread (shows editable spine strip)
+  const currentSpineWidth = isCoverSpread ? 150 : 100;
+
+  // Spread dimensions (two pages + spine)
+  const spreadWidth = pageDimensions.width * 2 + currentSpineWidth;
+  const spreadHeight = pageDimensions.height;
+
+  // Calculate scale to fit container with padding
   const scale = Math.min(
-    containerSize.width / spreadWidth,
-    containerSize.height / spreadHeight
-  ) * 0.85; // 85% to add padding
+    (containerSize.width - 32) / spreadWidth,
+    (containerSize.height - 32) / spreadHeight
+  ) * 0.92;
 
   const scaledSpreadWidth = spreadWidth * scale;
   const scaledSpreadHeight = spreadHeight * scale;
   const scaledPageWidth = pageDimensions.width * scale;
-  const scaledSpineWidth = spineWidth * scale;
+  const scaledSpineWidth = currentSpineWidth * scale;
 
-  // Handle window resize
+  // Sync zoom level to store
   useEffect(() => {
+    setZoomLevel(Math.round(scale * 100));
+  }, [scale, setZoomLevel]);
+
+  // Handle container resize with ResizeObserver
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
     const updateSize = () => {
-      const container = stageRef.current?.container().parentElement;
-      if (container) {
-        setContainerSize({
-          width: container.clientWidth,
-          height: container.clientHeight,
-        });
-      }
+      setContainerSize({
+        width: container.clientWidth,
+        height: container.clientHeight,
+      });
     };
 
     updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
   }, []);
 
   // Handle canvas click (deselect)
@@ -123,6 +142,11 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
   // Handle element transform
   const handleElementTransform = (elementId: string, pageId: string, attrs: any) => {
     updateElement(pageId, elementId, attrs);
+  };
+
+  // Handle spine title edit
+  const handleSpineTitleEdit = () => {
+    setEditingSpineTitle(true);
   };
 
   // Handle keyboard shortcuts
@@ -156,14 +180,12 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
     e.preventDefault();
     setIsDragOver(false);
 
-    // Check if dropping a photo
     const photoId = e.dataTransfer.getData('photoId');
     if (photoId) {
       handlePhotoDrop(e, photoId);
       return;
     }
 
-    // Check if dropping a sticker
     const stickerId = e.dataTransfer.getData('stickerId');
     if (stickerId) {
       handleStickerDrop(e, stickerId);
@@ -175,35 +197,28 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
     const photo = selectedPhotos.find((p) => p.id === photoId);
     if (!photo) return;
 
-    // Get drop position relative to canvas
     const container = e.currentTarget;
     const rect = container.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Determine which page was dropped on
     const isLeftSide = x < (scaledPageWidth + scaledSpineWidth / 2);
     const targetPage = isLeftSide ? leftPage : rightPage;
     if (!targetPage) return;
 
-    // Calculate position relative to page (accounting for spread offset)
     const pageOffsetX = isLeftSide ? 0 : scaledPageWidth + scaledSpineWidth;
     const relativeX = x - pageOffsetX;
     const relativeY = y;
 
-    // Convert to stage coordinates
     const stageX = relativeX / scale;
     const stageY = relativeY / scale;
 
-    // Convert to percentage
     const xPercent = (stageX / pageDimensions.width) * 100;
     const yPercent = (stageY / pageDimensions.height) * 100;
 
-    // Default size
     const defaultWidth = 20;
     const defaultHeight = (defaultWidth * photo.height) / photo.width;
 
-    // Check for placeholders
     const placeholders = targetPage.elements.filter(
       (el) => el.type === 'photo' && !el.photoId
     );
@@ -244,42 +259,34 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
   };
 
   const handleStickerDrop = (e: React.DragEvent, stickerId: string) => {
-    // Parse sticker data
     const stickerDataString = e.dataTransfer.getData('application/sticker');
     if (!stickerDataString) return;
 
     try {
       const stickerData = JSON.parse(stickerDataString);
 
-      // Get drop position relative to canvas
       const container = e.currentTarget;
       const rect = container.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      // Determine which page was dropped on
       const isLeftSide = x < (scaledPageWidth + scaledSpineWidth / 2);
       const targetPage = isLeftSide ? leftPage : rightPage;
       if (!targetPage) return;
 
-      // Calculate position relative to page (accounting for spread offset)
       const pageOffsetX = isLeftSide ? 0 : scaledPageWidth + scaledSpineWidth;
       const relativeX = x - pageOffsetX;
       const relativeY = y;
 
-      // Convert to stage coordinates
       const stageX = relativeX / scale;
       const stageY = relativeY / scale;
 
-      // Convert to percentage
       const xPercent = (stageX / pageDimensions.width) * 100;
       const yPercent = (stageY / pageDimensions.height) * 100;
 
-      // Default size for stickers
-      const defaultWidth = 15; // 15% of page width
+      const defaultWidth = 15;
       const defaultHeight = 15;
 
-      // Center on drop point
       const centeredX = Math.max(0, Math.min(xPercent - defaultWidth / 2, 100 - defaultWidth));
       const centeredY = Math.max(0, Math.min(yPercent - defaultHeight / 2, 100 - defaultHeight));
 
@@ -314,7 +321,7 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
             y={0}
             width={pageDimensions.width}
             height={pageDimensions.height}
-            fill="#e5e7eb"
+            fill="#f0f0f0"
             name="page-bg"
           />
         </Group>
@@ -335,6 +342,38 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
           name="page-bg"
           onClick={() => setActivePageSide(side)}
         />
+
+        {/* Subtle edge highlights for 3D effect */}
+        {side === 'left' && (
+          <Rect
+            x={pageDimensions.width - 3}
+            y={0}
+            width={3}
+            height={pageDimensions.height}
+            fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+            fillLinearGradientEndPoint={{ x: 3, y: 0 }}
+            fillLinearGradientColorStops={[
+              0, 'rgba(0, 0, 0, 0)',
+              1, 'rgba(0, 0, 0, 0.06)',
+            ]}
+            listening={false}
+          />
+        )}
+        {side === 'right' && (
+          <Rect
+            x={0}
+            y={0}
+            width={3}
+            height={pageDimensions.height}
+            fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+            fillLinearGradientEndPoint={{ x: 3, y: 0 }}
+            fillLinearGradientColorStops={[
+              0, 'rgba(0, 0, 0, 0.06)',
+              1, 'rgba(0, 0, 0, 0)',
+            ]}
+            listening={false}
+          />
+        )}
 
         {/* Page Elements */}
         {sortedElements.map((element) => (
@@ -369,24 +408,173 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
     );
   };
 
+  // Render spine/binding between pages
+  const renderSpine = () => {
+    if (isCoverSpread) {
+      // Cover spine: distinct strip with editable vertical title
+      const spineBgColor = rightPage?.background?.color || leftPage?.background?.color || '#e5e7eb';
+      // Darken spine color slightly for depth
+      return (
+        <Group x={pageDimensions.width} y={0}>
+          {/* Spine background */}
+          <Rect
+            x={0}
+            y={0}
+            width={currentSpineWidth}
+            height={pageDimensions.height}
+            fill={spineBgColor}
+          />
+          {/* Left edge inset shadow */}
+          <Rect
+            x={0}
+            y={0}
+            width={6}
+            height={pageDimensions.height}
+            fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+            fillLinearGradientEndPoint={{ x: 6, y: 0 }}
+            fillLinearGradientColorStops={[
+              0, 'rgba(0, 0, 0, 0.18)',
+              1, 'rgba(0, 0, 0, 0)',
+            ]}
+            listening={false}
+          />
+          {/* Right edge inset shadow */}
+          <Rect
+            x={currentSpineWidth - 6}
+            y={0}
+            width={6}
+            height={pageDimensions.height}
+            fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+            fillLinearGradientEndPoint={{ x: 6, y: 0 }}
+            fillLinearGradientColorStops={[
+              0, 'rgba(0, 0, 0, 0)',
+              1, 'rgba(0, 0, 0, 0.18)',
+            ]}
+            listening={false}
+          />
+          {/* Center groove line */}
+          <Rect
+            x={currentSpineWidth / 2 - 1}
+            y={0}
+            width={2}
+            height={pageDimensions.height}
+            fill="rgba(0, 0, 0, 0.08)"
+            listening={false}
+          />
+          {/* Vertical title text */}
+          <KonvaText
+            text={spineTitle || 'My PhotoBook'}
+            x={currentSpineWidth / 2}
+            y={pageDimensions.height / 2}
+            fontSize={Math.min(currentSpineWidth * 0.55, 80)}
+            fontFamily="Arial, sans-serif"
+            fontStyle="bold"
+            fill="rgba(0, 0, 0, 0.5)"
+            align="center"
+            verticalAlign="middle"
+            rotation={-90}
+            offsetX={0}
+            offsetY={0}
+            width={pageDimensions.height * 0.6}
+            height={currentSpineWidth}
+            name="spine-title"
+            onDblClick={handleSpineTitleEdit}
+            onDblTap={handleSpineTitleEdit}
+          />
+        </Group>
+      );
+    }
+
+    // Content spine: subtle book fold gradient
+    return (
+      <Group>
+        {/* Center fold gradient */}
+        <Rect
+          x={pageDimensions.width}
+          y={0}
+          width={currentSpineWidth}
+          height={pageDimensions.height}
+          fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+          fillLinearGradientEndPoint={{ x: currentSpineWidth, y: 0 }}
+          fillLinearGradientColorStops={[
+            0, 'rgba(0, 0, 0, 0.06)',
+            0.15, 'rgba(0, 0, 0, 0.14)',
+            0.5, 'rgba(0, 0, 0, 0.18)',
+            0.85, 'rgba(0, 0, 0, 0.14)',
+            1, 'rgba(0, 0, 0, 0.06)',
+          ]}
+          listening={false}
+        />
+        {/* Inner shadow: left page edge */}
+        <Rect
+          x={pageDimensions.width - 15}
+          y={0}
+          width={15}
+          height={pageDimensions.height}
+          fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+          fillLinearGradientEndPoint={{ x: 15, y: 0 }}
+          fillLinearGradientColorStops={[
+            0, 'rgba(0, 0, 0, 0)',
+            1, 'rgba(0, 0, 0, 0.08)',
+          ]}
+          listening={false}
+        />
+        {/* Inner shadow: right page edge */}
+        <Rect
+          x={pageDimensions.width + currentSpineWidth}
+          y={0}
+          width={15}
+          height={pageDimensions.height}
+          fillLinearGradientStartPoint={{ x: 0, y: 0 }}
+          fillLinearGradientEndPoint={{ x: 15, y: 0 }}
+          fillLinearGradientColorStops={[
+            0, 'rgba(0, 0, 0, 0.08)',
+            1, 'rgba(0, 0, 0, 0)',
+          ]}
+          listening={false}
+        />
+      </Group>
+    );
+  };
+
+  // Get page label text
+  const getPageLabel = (pg: StudioPage | null, side: 'left' | 'right') => {
+    if (!pg) return '';
+    if (pg.type === 'back-cover') return 'Back cover';
+    if (pg.type === 'cover') return 'Front cover';
+    return `Page ${pg.pageNumber}`;
+  };
+
   return (
     <div
-      className="relative flex items-center justify-center"
+      ref={containerRef}
+      className="relative flex items-center justify-center w-full h-full"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      style={{
+        background: '#ededed',
+      }}
     >
-      {/* Spread Container */}
+      {/* Photobook Spread Container */}
       <div
-        className={`shadow-2xl transition-all rounded-lg overflow-hidden ${
-          isDragOver ? 'ring-4 ring-violet-500 ring-opacity-50' : ''
+        className={`relative transition-all ${
+          isDragOver ? 'scale-[1.02]' : ''
         }`}
         style={{
           width: scaledSpreadWidth,
           height: scaledSpreadHeight,
-          background: 'linear-gradient(to right, #1e293b 0%, #0f172a 50%, #1e293b 100%)',
+          filter: 'drop-shadow(0 4px 20px rgba(0, 0, 0, 0.15)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1))',
         }}
       >
+        {/* Main spread container */}
+        <div
+          className="relative overflow-hidden rounded-sm"
+          style={{
+            width: '100%',
+            height: '100%',
+          }}
+        >
         <Stage
           ref={stageRef}
           width={scaledSpreadWidth}
@@ -402,22 +590,10 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
             {renderPageInGroup(leftPage, 0, 'left')}
 
             {/* Center Spine/Binding */}
-            <Rect
-              x={pageDimensions.width}
-              y={0}
-              width={spineWidth}
-              height={pageDimensions.height}
-              fillLinearGradientStartPoint={{ x: 0, y: 0 }}
-              fillLinearGradientEndPoint={{ x: spineWidth, y: 0 }}
-              fillLinearGradientColorStops={[
-                0, 'rgba(0, 0, 0, 0.3)',
-                0.5, 'rgba(0, 0, 0, 0.5)',
-                1, 'rgba(0, 0, 0, 0.3)',
-              ]}
-            />
+            {renderSpine()}
 
             {/* Right Page */}
-            {renderPageInGroup(rightPage, pageDimensions.width + spineWidth, 'right')}
+            {renderPageInGroup(rightPage, pageDimensions.width + currentSpineWidth, 'right')}
           </Layer>
 
           {/* UI Layer */}
@@ -425,12 +601,78 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
             <SelectionBox onSelect={(elementIds) => selectElements(elementIds, false)} />
           </Layer>
         </Stage>
+        </div>
       </div>
 
-      {/* Zoom indicator */}
-      <div className="absolute bottom-4 right-4 px-3 py-1 bg-slate-800/90 rounded-lg text-xs text-slate-300">
-        {Math.round(scale * 100)}%
+      {/* Page Labels - Centered below each page */}
+      <div
+        className="absolute flex pointer-events-none"
+        style={{
+          width: scaledSpreadWidth,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          bottom: 8,
+        }}
+      >
+        <div style={{ width: scaledPageWidth }} className="text-center">
+          <span className="text-xs text-gray-500 font-medium">
+            {getPageLabel(leftPage, 'left')}
+          </span>
+        </div>
+        <div style={{ width: scaledSpineWidth }} />
+        <div style={{ width: scaledPageWidth }} className="text-center">
+          <span className="text-xs text-gray-500 font-medium">
+            {getPageLabel(rightPage, 'right')}
+          </span>
+        </div>
       </div>
+
+      {/* Spine Title Editor - DOM overlay (must be outside Stage) */}
+      {editingSpineTitle && isCoverSpread && (() => {
+        const spreadLeft = (containerSize.width - scaledSpreadWidth) / 2;
+        const spreadTop = (containerSize.height - scaledSpreadHeight) / 2;
+        const spineScreenX = spreadLeft + scaledPageWidth;
+        const spineScreenY = spreadTop;
+
+        return (
+          <div
+            className="absolute z-50 flex items-center justify-center"
+            style={{
+              left: spineScreenX,
+              top: spineScreenY,
+              width: scaledSpineWidth,
+              height: scaledSpreadHeight,
+            }}
+          >
+            <input
+              type="text"
+              autoFocus
+              defaultValue={spineTitle || 'My PhotoBook'}
+              className="bg-white/95 border-2 border-violet-500 rounded text-center font-bold text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+              style={{
+                writingMode: 'vertical-rl',
+                textOrientation: 'mixed',
+                width: Math.max(scaledSpineWidth - 4, 20),
+                height: Math.min(scaledSpreadHeight * 0.6, 300),
+                letterSpacing: '0.05em',
+              }}
+              onBlur={(e) => {
+                updateSpineTitle(e.target.value);
+                setEditingSpineTitle(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  updateSpineTitle((e.target as HTMLInputElement).value);
+                  setEditingSpineTitle(false);
+                }
+                if (e.key === 'Escape') {
+                  setEditingSpineTitle(false);
+                }
+              }}
+            />
+          </div>
+        );
+      })()}
 
       {/* Text Editor */}
       {editingTextId && (() => {

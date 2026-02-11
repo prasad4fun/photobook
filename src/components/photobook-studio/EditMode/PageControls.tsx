@@ -35,24 +35,24 @@ export default function PageControls({ currentPageId }: PageControlsProps) {
   };
 
   return (
-    <div className="absolute bottom-24 right-6 flex flex-col gap-2">
+    <div className="absolute bottom-16 right-3 sm:right-4 flex flex-col gap-1.5 z-10">
       {/* Add Page */}
       <button
         onClick={handleAddPage}
-        className="p-3 rounded-lg bg-violet-600 hover:bg-violet-700 shadow-lg transition-colors"
+        className="p-2 sm:p-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 shadow-lg transition-colors"
         title="Add Page"
       >
-        <Plus size={24} />
+        <Plus size={20} />
       </button>
 
       {/* Remove Page */}
       <button
         onClick={handleRemovePage}
         disabled={!canRemove}
-        className="p-3 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-slate-700 disabled:cursor-not-allowed shadow-lg transition-colors"
+        className="p-2 sm:p-2.5 rounded-lg bg-red-600 hover:bg-red-700 disabled:bg-slate-700 disabled:cursor-not-allowed shadow-lg transition-colors"
         title={canRemove ? 'Remove Page' : 'Cannot remove this page'}
       >
-        <Trash2 size={24} />
+        <Trash2 size={20} />
       </button>
     </div>
   );

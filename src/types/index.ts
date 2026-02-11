@@ -725,6 +725,7 @@ export interface StudioPhotoBook {
   updatedAt: Date;
   pages: StudioPage[];
   config: StudioPhotoBookConfig;
+  spineTitle?: string;
 }
 
 /**
@@ -949,6 +950,11 @@ export interface StudioPoint {
 }
 
 /**
+ * Left Panel View Type - Controls which view is shown in the left panel
+ */
+export type LeftPanelView = 'photos' | 'layouts' | 'stickers' | 'shapes';
+
+/**
  * PhotoBook Studio Editor State
  */
 export interface PhotoBookEditorState {
@@ -962,6 +968,9 @@ export interface PhotoBookEditorState {
   clipboard: StudioPageElement | null;
   history: StudioPhotoBookSnapshot[];
   historyIndex: number;
+  leftPanelView: LeftPanelView;
+  currentSpreadIndex: number;
+  zoomLevel: number;
 }
 
 /**
