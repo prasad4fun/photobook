@@ -17,7 +17,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { StudioPhotoElement, StudioPhoto, StudioPhotoTransform, StudioFrameStyle, StudioPhotoEffect } from '../../../../types';
+import { StudioPhotoElement, StudioPhoto, StudioFrameStyle, StudioPhotoEffect } from '../../../../types';
 import { usePhotoBookStore } from '../../../../hooks/usePhotoBookStore';
 
 interface PhotoToolbarProps {
@@ -137,16 +137,6 @@ export default function PhotoToolbar({ element, photo, pageId, onClose }: PhotoT
     if (window.confirm('Delete this photo?')) {
       deleteElements(pageId, [element.id]);
       onClose?.();
-    }
-  };
-
-  // Remove photo but keep slot
-  const handleRemovePhoto = () => {
-    if (window.confirm('Remove photo from design? The slot will remain empty.')) {
-      // Keep the slot, just remove the photo reference
-      updateElement(pageId, element.id, {
-        photoId: '',
-      });
     }
   };
 

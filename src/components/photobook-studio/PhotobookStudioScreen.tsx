@@ -80,7 +80,6 @@ export default function PhotobookStudioScreen({
       {mode === 'selection' ? (
         <SelectionMode
           maxPhotos={maxPhotos}
-          bookConfig={bookConfig}
           onCancel={onCancel}
         />
       ) : (

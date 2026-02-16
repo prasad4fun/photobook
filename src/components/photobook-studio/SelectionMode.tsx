@@ -4,20 +4,17 @@
 
 import React from 'react';
 import { usePhotoBookStore } from '../../hooks/usePhotoBookStore';
-import type { StudioPhoto, StudioPhotoBookConfig } from '../../types';
 import PhotoGrid from './SelectionMode/PhotoGrid';
 import AddPhotosButton from './SelectionMode/AddPhotosButton';
 import { ArrowRight } from 'lucide-react';
 
 interface SelectionModeProps {
   maxPhotos: number;
-  bookConfig?: StudioPhotoBookConfig;
   onCancel: () => void;
 }
 
 export default function SelectionMode({
   maxPhotos,
-  bookConfig,
   onCancel,
 }: SelectionModeProps) {
   const selectedPhotos = usePhotoBookStore((state) => state.selectedPhotos);
@@ -26,8 +23,8 @@ export default function SelectionMode({
   );
 
   const handleGeneratePhotoBook = () => {
-    if (selectedPhotos.length === 0) {
-      alert('Please add at least one photo to create a photobook');
+    if (selectedPhotos.length < 28) {
+      alert('Please add at least 28 photos to create a photobook');
       return;
     }
     generatePhotoBookFromPhotos();
@@ -52,7 +49,7 @@ export default function SelectionMode({
           </button>
           <button
             onClick={handleGeneratePhotoBook}
-            disabled={selectedPhotos.length === 0}
+            disabled={selectedPhotos.length < 28}
             className="px-6 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:bg-slate-700 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             Generate PhotoBook
@@ -69,7 +66,16 @@ export default function SelectionMode({
         </div>
 
         {/* Right Panel - Add Photos */}
-        <div className="w-80 border-l border-slate-800 p-6 flex flex-col items-center justify-center">
+        <div className="w-80 border-l border-slate-800 p-6 flex flex-col items-center">
+          <h2 className="text-xl font-bold mb-2">Add Photos</h2>
+          <p className="text-sm text-slate-400 text-center mb-2">
+            Upload at least 28 photos to create a proposition.
+          </p>
+          {selectedPhotos.length < 28 && (
+            <p className="text-sm text-violet-400 font-medium mb-6">
+              Add {28 - selectedPhotos.length} more photos
+            </p>
+          )}
           <AddPhotosButton
             maxPhotos={maxPhotos}
             currentCount={selectedPhotos.length}

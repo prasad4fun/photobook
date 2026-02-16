@@ -6,13 +6,16 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Rect } from 'react-konva';
 import Konva from 'konva';
-import type { StudioPage, StudioPageElement, StudioTextElement } from '../../../types';
+import type { StudioPage, StudioPageElement, StudioPageType, StudioTextElement } from '../../../types';
 import { usePhotoBookStore } from '../../../hooks/usePhotoBookStore';
 import { getPageDimensions } from '../../../services/photobook-studio/photobookGenerator';
 import ElementRenderer from './canvas/ElementRenderer';
 import ElementTransformer from './canvas/ElementTransformer';
 import SelectionBox from './canvas/SelectionBox';
 import TextEditor from './canvas/TextEditor';
+
+// Page types that cannot be edited, dragged onto, or have elements selected
+const NON_EDITABLE_PAGE_TYPES: StudioPageType[] = ['back-of-cover', 'back-cover'];
 
 interface PageCanvasProps {
   page: StudioPage;
@@ -150,6 +153,9 @@ export default function PageCanvas({ page }: PageCanvasProps) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
+
+    // Block drops on non-editable pages
+    if (NON_EDITABLE_PAGE_TYPES.includes(page.type)) return;
 
     const photoId = e.dataTransfer.getData('photoId');
     if (!photoId) return;

@@ -13,7 +13,6 @@ import type {
   StudioPageElement,
   StudioPhotoBookSnapshot,
   StudioPhotoElement,
-  StudioPhotoBookConfig,
   StudioPageLayout,
   LeftPanelView,
 } from '../../types';

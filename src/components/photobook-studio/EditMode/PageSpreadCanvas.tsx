@@ -8,13 +8,16 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Stage, Layer, Rect, Group, Text as KonvaText } from 'react-konva';
 import Konva from 'konva';
-import type { StudioPage, StudioTextElement } from '../../../types';
+import type { StudioPage, StudioPageType, StudioTextElement } from '../../../types';
 import { usePhotoBookStore } from '../../../hooks/usePhotoBookStore';
 import { getPageDimensions } from '../../../services/photobook-studio/photobookGenerator';
 import ElementRenderer from './canvas/ElementRenderer';
 import ElementTransformer from './canvas/ElementTransformer';
 import SelectionBox from './canvas/SelectionBox';
 import TextEditor from './canvas/TextEditor';
+
+// Page types that cannot be edited, dragged onto, or have elements selected
+const NON_EDITABLE_PAGE_TYPES: StudioPageType[] = ['back-of-cover', 'back-cover'];
 
 interface PageSpreadCanvasProps {
   page: StudioPage;
@@ -53,6 +56,14 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
   const getAdjacentPage = (): StudioPage | null => {
     if (!photoBook) return null;
 
+    // Special case: cover spread pairs front cover with back cover
+    if (currentPage.type === 'cover') {
+      return photoBook.pages.find((p) => p.type === 'back-cover') || null;
+    }
+    if (currentPage.type === 'back-cover') {
+      return photoBook.pages.find((p) => p.type === 'cover') || null;
+    }
+
     const currentIndex = photoBook.pages.findIndex((p) => p.id === currentPage.id);
     if (currentIndex === -1) return null;
 
@@ -64,8 +75,12 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
   const adjacentPage = getAdjacentPage();
 
   // Determine which page is left and which is right
-  const leftPage = currentPage.pageNumber % 2 === 0 ? currentPage : adjacentPage;
-  const rightPage = currentPage.pageNumber % 2 === 0 ? adjacentPage : currentPage;
+  const leftPage = currentPage.type === 'cover' ? adjacentPage
+    : currentPage.type === 'back-cover' ? currentPage
+    : currentPage.pageNumber % 2 === 0 ? currentPage : adjacentPage;
+  const rightPage = currentPage.type === 'cover' ? currentPage
+    : currentPage.type === 'back-cover' ? adjacentPage
+    : currentPage.pageNumber % 2 === 0 ? adjacentPage : currentPage;
 
   // Determine if this is a cover spread
   const isCoverSpread =
@@ -139,9 +154,16 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
     }
   };
 
-  // Handle element transform
+  // Handle element transform - clamp position to keep elements within page bounds
   const handleElementTransform = (elementId: string, pageId: string, attrs: any) => {
-    updateElement(pageId, elementId, attrs);
+    const clampedAttrs = { ...attrs };
+    if (clampedAttrs.x !== undefined) {
+      clampedAttrs.x = Math.max(0, clampedAttrs.x);
+    }
+    if (clampedAttrs.y !== undefined) {
+      clampedAttrs.y = Math.max(0, clampedAttrs.y);
+    }
+    updateElement(pageId, elementId, clampedAttrs);
   };
 
   // Handle spine title edit
@@ -205,6 +227,9 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
     const isLeftSide = x < (scaledPageWidth + scaledSpineWidth / 2);
     const targetPage = isLeftSide ? leftPage : rightPage;
     if (!targetPage) return;
+
+    // Block drops on non-editable pages
+    if (NON_EDITABLE_PAGE_TYPES.includes(targetPage.type)) return;
 
     const pageOffsetX = isLeftSide ? 0 : scaledPageWidth + scaledSpineWidth;
     const relativeX = x - pageOffsetX;
@@ -274,6 +299,9 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
       const targetPage = isLeftSide ? leftPage : rightPage;
       if (!targetPage) return;
 
+      // Block drops on non-editable pages
+      if (NON_EDITABLE_PAGE_TYPES.includes(targetPage.type)) return;
+
       const pageOffsetX = isLeftSide ? 0 : scaledPageWidth + scaledSpineWidth;
       const relativeX = x - pageOffsetX;
       const relativeY = y;
@@ -329,9 +357,17 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
     }
 
     const sortedElements = [...currentPage.elements].sort((a, b) => a.zIndex - b.zIndex);
+    const isNonEditable = NON_EDITABLE_PAGE_TYPES.includes(currentPage.type);
 
     return (
-      <Group x={xOffset} y={0}>
+      <Group
+        x={xOffset}
+        y={0}
+        clipX={0}
+        clipY={0}
+        clipWidth={pageDimensions.width}
+        clipHeight={pageDimensions.height}
+      >
         {/* Page Background */}
         <Rect
           x={0}
@@ -375,29 +411,31 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
           />
         )}
 
-        {/* Page Elements */}
-        {sortedElements.map((element) => (
-          <ElementRenderer
-            key={element.id}
-            element={element}
-            pageId={currentPage.id}
-            isSelected={activePageSide === side && selectedElementIds.includes(element.id)}
-            onClick={(e) => {
-              setActivePageSide(side);
-              handleElementClick(element.id, currentPage.id, e);
-            }}
-            onTransform={(attrs) => handleElementTransform(element.id, currentPage.id, attrs)}
-            onDoubleClick={() => {
-              if (element.type === 'text') {
-                setEditingTextId(element.id);
+        {/* Page Elements - render as view-only on non-editable pages */}
+        <Group listening={!isNonEditable}>
+          {sortedElements.map((element) => (
+            <ElementRenderer
+              key={element.id}
+              element={element}
+              pageId={currentPage.id}
+              isSelected={!isNonEditable && activePageSide === side && selectedElementIds.includes(element.id)}
+              onClick={isNonEditable ? undefined : (e) => {
                 setActivePageSide(side);
-              }
-            }}
-          />
-        ))}
+                handleElementClick(element.id, currentPage.id, e);
+              }}
+              onTransform={isNonEditable ? undefined : (attrs) => handleElementTransform(element.id, currentPage.id, attrs)}
+              onDoubleClick={isNonEditable ? undefined : () => {
+                if (element.type === 'text') {
+                  setEditingTextId(element.id);
+                  setActivePageSide(side);
+                }
+              }}
+            />
+          ))}
+        </Group>
 
-        {/* Transformer */}
-        {activePageSide === side && (
+        {/* Transformer - only on editable pages */}
+        {!isNonEditable && activePageSide === side && (
           <ElementTransformer
             selectedElementIds={selectedElementIds}
             elements={currentPage.elements}
@@ -461,7 +499,7 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
             fill="rgba(0, 0, 0, 0.08)"
             listening={false}
           />
-          {/* Vertical title text */}
+          {/* Vertical title text - rotated 90° clockwise, centered in spine */}
           <KonvaText
             text={spineTitle || 'My PhotoBook'}
             x={currentSpineWidth / 2}
@@ -472,9 +510,9 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
             fill="rgba(0, 0, 0, 0.5)"
             align="center"
             verticalAlign="middle"
-            rotation={-90}
-            offsetX={0}
-            offsetY={0}
+            rotation={90}
+            offsetX={pageDimensions.height * 0.6 / 2}
+            offsetY={currentSpineWidth / 2}
             width={pageDimensions.height * 0.6}
             height={currentSpineWidth}
             name="spine-title"
@@ -648,13 +686,13 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
               type="text"
               autoFocus
               defaultValue={spineTitle || 'My PhotoBook'}
-              className="bg-white/95 border-2 border-violet-500 rounded text-center font-bold text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+              className="bg-white/95 border-2 border-violet-500 rounded text-center font-bold text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 text-gray-800"
               style={{
-                writingMode: 'vertical-rl',
-                textOrientation: 'mixed',
-                width: Math.max(scaledSpineWidth - 4, 20),
-                height: Math.min(scaledSpreadHeight * 0.6, 300),
-                letterSpacing: '0.05em',
+                transform: 'rotate(90deg)',
+                transformOrigin: 'center center',
+                width: Math.min(scaledSpreadHeight * 0.6, 300),
+                height: Math.max(scaledSpineWidth - 4, 20),
+                color: '#1f2937',
               }}
               onBlur={(e) => {
                 updateSpineTitle(e.target.value);

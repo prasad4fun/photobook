@@ -52,7 +52,7 @@ export default function PhotobookEditorScreen({
 
   const [currentSpreadIndex, setCurrentSpreadIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
-  const [_showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   const currentSpread = editorState.spreads[currentSpreadIndex];
 

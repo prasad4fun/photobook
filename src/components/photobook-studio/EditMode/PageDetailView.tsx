@@ -21,7 +21,6 @@ export default function PageDetailView({ features }: PageDetailViewProps) {
   // All hooks must be called before any conditional returns
   const photoBook = usePhotoBookStore((state) => state.photoBook);
   const currentPageId = usePhotoBookStore((state) => state.currentPageId);
-  const selectPage = usePhotoBookStore((state) => state.selectPage);
   const selectedElementIds = usePhotoBookStore((state) => state.selectedElementIds);
   const updateElement = usePhotoBookStore((state) => state.updateElement);
   const deleteElements = usePhotoBookStore((state) => state.deleteElements);

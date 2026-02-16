@@ -209,8 +209,6 @@ export default function PhotoElementRenderer({
       return [];
     }
 
-    const normalizedIntensity = intensity / 100; // Convert 0-100 to 0-1
-
     switch (effectType) {
       case 'grayscale':
         return [Konva.Filters.Grayscale];

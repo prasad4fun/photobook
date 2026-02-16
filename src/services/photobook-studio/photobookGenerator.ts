@@ -10,7 +10,6 @@ import type {
   StudioPhotoElement,
   StudioTextElement,
   StudioLayoutTemplate,
-  StudioPhotoSlot,
 } from '../../types';
 import { STUDIO_PAGE_DIMENSIONS } from '../../types';
 
@@ -32,12 +31,19 @@ export function generatePhotoBook(
   // Create cover page
   photoBook.pages.push(createCoverPage(photos[0], config));
 
+  // Front end paper (non-editable, right after cover)
+  photoBook.pages.push(createEndPaper('page-front-endpaper', 2));
+
   // Create content pages
   const contentPages = createContentPages(photos, config);
   photoBook.pages.push(...contentPages);
 
-  // Create back cover
-  photoBook.pages.push(createBackPage(config));
+  // Back end paper (non-editable, right before back cover)
+  photoBook.pages.push(createEndPaper('page-back-endpaper', 999));
+
+  // Create back cover (auto-populate with last 4 photos)
+  const backCoverPhotos = photos.slice(-4);
+  photoBook.pages.push(createBackPage(config, backCoverPhotos));
 
   return photoBook;
 }
@@ -105,19 +111,52 @@ function createCoverPage(coverPhoto: StudioPhoto, config: StudioPhotoBookConfig)
 }
 
 /**
- * Create content pages
+ * Create content pages with a mix of 1-photo and 2-photo layouts.
+ * Targets at least 18 content pages (20 total with cover + back cover).
  */
 function createContentPages(photos: StudioPhoto[], config: StudioPhotoBookConfig): StudioPage[] {
   const pages: StudioPage[] = [];
-  const photosPerPage = 4; // Using grid layout
   const contentPhotos = photos.slice(1); // Skip first photo (used for cover)
+  const minContentPages = 18; // 20 total - cover - back cover
+
+  // Calculate how many pages we need and how to distribute photos
+  const maxPhotosPerPage = 2;
+  const naturalPages = Math.ceil(contentPhotos.length / maxPhotosPerPage);
+  const targetPages = Math.max(minContentPages, naturalPages);
+
+  // Build a schedule: determine how many photos each page gets
+  // twoPagesCount pages get 2 photos, the rest get 1 photo
+  const twoPagesCount = contentPhotos.length - targetPages;
+  const onePagesCount = targetPages - twoPagesCount;
+
+  // Create an alternating schedule for visual variety
+  const schedule: number[] = [];
+  let twoRemaining = twoPagesCount;
+  let oneRemaining = onePagesCount;
+
+  for (let i = 0; i < targetPages; i++) {
+    // Alternate: even index → 2-photo page (if available), odd → 1-photo page
+    if (i % 2 === 0 && twoRemaining > 0) {
+      schedule.push(2);
+      twoRemaining--;
+    } else if (oneRemaining > 0) {
+      schedule.push(1);
+      oneRemaining--;
+    } else {
+      schedule.push(2);
+      twoRemaining--;
+    }
+  }
 
   let photoIndex = 0;
-  let pageNumber = 2; // Start after cover
+  let pageNumber = 3; // Start after cover (1) and front end paper (2)
 
-  while (photoIndex < contentPhotos.length) {
-    const pagePhotos = contentPhotos.slice(photoIndex, photoIndex + photosPerPage);
-    const layout = getLayoutTemplate(`grid-${Math.min(pagePhotos.length, 4)}`);
+  for (const photosOnPage of schedule) {
+    const pagePhotos = contentPhotos.slice(photoIndex, photoIndex + photosOnPage);
+    if (pagePhotos.length === 0) break;
+
+    const layoutId = `grid-${pagePhotos.length}`;
+    const layout = getLayoutTemplate(layoutId);
 
     const elements: StudioPhotoElement[] = pagePhotos.map((photo, idx) => {
       const slot = layout.photoSlots[idx];
@@ -141,7 +180,7 @@ function createContentPages(photos: StudioPhoto[], config: StudioPhotoBookConfig
       type: 'content',
       elements,
       layout: {
-        id: `grid-${pagePhotos.length}`,
+        id: layoutId,
         name: `Grid ${pagePhotos.length} Photos`,
         template: layout,
       },
@@ -151,7 +190,7 @@ function createContentPages(photos: StudioPhoto[], config: StudioPhotoBookConfig
       },
     });
 
-    photoIndex += photosPerPage;
+    photoIndex += photosOnPage;
     pageNumber++;
   }
 
@@ -159,56 +198,115 @@ function createContentPages(photos: StudioPhoto[], config: StudioPhotoBookConfig
 }
 
 /**
+ * Create a non-editable end paper page (dark grey with centered message)
+ */
+function createEndPaper(id: string, pageNumber: number): StudioPage {
+  const headingElement: StudioTextElement = {
+    id: `element-text-${Date.now()}-heading`,
+    type: 'text',
+    content: 'THIS PAGE CANNOT BE EDITED',
+    x: 10,
+    y: 40,
+    width: 80,
+    height: 10,
+    fontSize: 166.67, // 40pt at 300 DPI
+    fontFamily: 'Londrina Solid',
+    fontWeight: '900',
+    fontStyle: 'normal',
+    textAlign: 'center',
+    color: '#9ca3af',
+    lineHeight: 1.2,
+    rotation: 0,
+    zIndex: 1,
+  };
+
+  const subtextElement: StudioTextElement = {
+    id: `element-text-${Date.now()}-subtext`,
+    type: 'text',
+    content: 'This is a not editable end paper',
+    x: 10,
+    y: 50,
+    width: 80,
+    height: 8,
+    fontSize: 100, // 24pt at 300 DPI
+    fontFamily: 'Londrina Solid',
+    fontWeight: '400',
+    fontStyle: 'normal',
+    textAlign: 'center',
+    color: '#6b7280',
+    lineHeight: 1.2,
+    rotation: 0,
+    zIndex: 1,
+  };
+
+  return {
+    id,
+    pageNumber,
+    type: 'back-of-cover',
+    elements: [headingElement, subtextElement],
+    layout: {
+      id: 'empty',
+      name: 'End Paper',
+      template: { photoSlots: [] },
+    },
+    background: {
+      type: 'color',
+      color: '#374151',
+    },
+  };
+}
+
+/**
  * Create back cover page
  */
-function createBackPage(config: StudioPhotoBookConfig): StudioPage {
-  // Create 2x2 grid layout for 4 photos (covering top 60% of page)
+function createBackPage(config: StudioPhotoBookConfig, photos: StudioPhoto[] = []): StudioPage {
+  // Create 2x2 grid layout for 4 photos (covering >50% of page)
   const backCoverTemplate: StudioLayoutTemplate = {
     photoSlots: [
       // Top-left photo
       {
         id: 'back-slot-1',
-        x: 15,        // 15% from left
-        y: 10,        // 10% from top
-        width: 32,    // 32% width (with 3% gaps)
-        height: 25,   // 25% height
+        x: 10,        // 10% from left
+        y: 5,         // 5% from top
+        width: 38,    // 38% width (with 4% gap)
+        height: 30,   // 30% height
         zIndex: 1,
       },
       // Top-right photo
       {
         id: 'back-slot-2',
-        x: 50,        // 15 + 32 + 3 = 50%
-        y: 10,
-        width: 32,
-        height: 25,
+        x: 52,        // 10 + 38 + 4 = 52%
+        y: 5,
+        width: 38,
+        height: 30,
         zIndex: 1,
       },
       // Bottom-left photo
       {
         id: 'back-slot-3',
-        x: 15,
-        y: 38,        // 10 + 25 + 3 = 38%
-        width: 32,
-        height: 25,
+        x: 10,
+        y: 38,        // 5 + 30 + 3 = 38%
+        width: 38,
+        height: 30,
         zIndex: 1,
       },
       // Bottom-right photo
       {
         id: 'back-slot-4',
-        x: 50,
+        x: 52,
         y: 38,
-        width: 32,
-        height: 25,
+        width: 38,
+        height: 30,
         zIndex: 1,
       },
     ],
   };
 
-  // Create 4 empty photo placeholder elements
+  // Create 4 photo elements, auto-populated with provided photos
   const photoElements: StudioPhotoElement[] = backCoverTemplate.photoSlots.map((slot, idx) => ({
     id: `element-${Date.now()}-${idx}`,
     type: 'photo',
-    photoId: undefined,  // Empty placeholder
+    photoId: photos[idx]?.id,  // Auto-populate with actual photo or undefined placeholder
     x: slot.x,
     y: slot.y,
     width: slot.width,
@@ -218,14 +316,13 @@ function createBackPage(config: StudioPhotoBookConfig): StudioPage {
     slotId: slot.id,
   }));
 
-  // Caption text element below photos
-  const currentYear = new Date().getFullYear();
+  // Year text element below photos
   const captionElement: StudioTextElement = {
     id: `element-text-${Date.now()}`,
     type: 'text',
-    content: 'Enter caption',  // Placeholder for user to edit
+    content: new Date().getFullYear().toString(),
     x: 25,            // Centered: 25% from left
-    y: 70,            // 70% from top (below photo grid at 63%)
+    y: 72,            // 72% from top (below photo grid at 68%)
     width: 50,        // 50% of page width
     height: 15,       // 15% of page height
     fontSize: 208.33, // 50pt at 300 DPI

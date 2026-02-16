@@ -114,9 +114,7 @@ export default function AddPhotosButton({
       <div className="w-48 h-48 border-2 border-dashed border-slate-700 rounded-xl flex flex-col items-center justify-center gap-3 hover:border-violet-500 hover:bg-slate-900/50 transition-all">
         <Upload size={48} className="text-slate-600" />
         <p className="text-slate-400 text-sm text-center px-4">
-          Drag photos here
-          <br />
-          or click button below
+          Drag and Drop or click to add photos from another source.
         </p>
       </div>
 
@@ -128,10 +126,6 @@ export default function AddPhotosButton({
         <Plus size={20} />
         Add Photos
       </button>
-
-      <p className="text-slate-500 text-xs">
-        {remainingSlots} slot{remainingSlots !== 1 ? 's' : ''} remaining
-      </p>
 
       <input
         ref={fileInputRef}
