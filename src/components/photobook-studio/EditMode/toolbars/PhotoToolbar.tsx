@@ -37,10 +37,12 @@ export default function PhotoToolbar({ element, photo, pageId, onClose }: PhotoT
 
   const transform = element.transform || {
     zoom: 1,
-    fit: 'fill',
+    fit: 'cover',
     rotation: 0,
     flipHorizontal: false,
     flipVertical: false,
+    panX: 0,
+    panY: 0,
   };
 
   const frame = element.frame || {
@@ -64,7 +66,7 @@ export default function PhotoToolbar({ element, photo, pageId, onClose }: PhotoT
   };
 
   const handleZoomOut = () => {
-    const newZoom = Math.max(0.5, transform.zoom - 0.1);
+    const newZoom = Math.max(1.0, transform.zoom - 0.1);
     updateElement(pageId, element.id, {
       transform: { ...transform, zoom: newZoom },
     });
@@ -72,7 +74,7 @@ export default function PhotoToolbar({ element, photo, pageId, onClose }: PhotoT
 
   const handleFit = () => {
     updateElement(pageId, element.id, {
-      transform: { ...transform, fit: 'fit', zoom: 1 },
+      transform: { ...transform, fit: 'cover', zoom: 1, panX: 0, panY: 0 },
     });
   };
 

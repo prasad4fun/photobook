@@ -3,7 +3,7 @@
  */
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Image, Group, Rect, Text, Line } from 'react-konva';
+import { Image, Group, Rect, Text, Line, Circle, Arrow } from 'react-konva';
 import Konva from 'konva';
 import { StudioPhotoElement } from '../../../../types';
 import { usePhotoBookStore } from '../../../../hooks/usePhotoBookStore';
@@ -25,10 +25,12 @@ export default function PhotoElementRenderer({
   onTransform,
 }: PhotoElementRendererProps) {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
   const imageRef = useRef<Konva.Image>(null);
 
   const photoBook = usePhotoBookStore((state) => state.photoBook);
   const selectedPhotos = usePhotoBookStore((state) => state.selectedPhotos);
+  const updateElement = usePhotoBookStore((state) => state.updateElement);
 
   // Get page dimensions for percentage conversion
   const pageDimensions = photoBook
@@ -164,19 +166,46 @@ export default function PhotoElementRenderer({
   // Get transform properties (v2.0)
   const transform = element.transform || {
     zoom: 1,
-    fit: 'fill',
+    fit: 'cover',
     rotation: 0,
     flipHorizontal: false,
     flipVertical: false,
+    panX: 0,
+    panY: 0,
   };
 
-  // Calculate crop for zoom
-  // When zoom > 1, we show a smaller portion of the image (zoomed in)
-  // When zoom < 1, we show more of the image (zoomed out)
-  const cropWidth = image.width / transform.zoom;
-  const cropHeight = image.height / transform.zoom;
-  const cropX = (image.width - cropWidth) / 2;
-  const cropY = (image.height - cropHeight) / 2;
+  // Cover-fit crop calculation
+  // The crop region must match the placeholder's aspect ratio (not the image's)
+  // so Konva scales it without distortion to fill the placeholder exactly.
+  const placeholderAspect = width / height;
+  const imageAspect = image.width / image.height;
+
+  // Base crop at zoom=1: largest region from image matching placeholder aspect ratio
+  let baseCropW: number;
+  let baseCropH: number;
+  if (imageAspect > placeholderAspect) {
+    // Image is wider: use full height, crop width to match placeholder aspect
+    baseCropH = image.height;
+    baseCropW = image.height * placeholderAspect;
+  } else {
+    // Image is taller: use full width, crop height to match placeholder aspect
+    baseCropW = image.width;
+    baseCropH = image.width / placeholderAspect;
+  }
+
+  // Apply user zoom (zoom=1 is cover fit, zoom>1 shows less of image)
+  const cropWidth = baseCropW / transform.zoom;
+  const cropHeight = baseCropH / transform.zoom;
+
+  // Pan offset: shift crop region within available slack
+  const slackX = Math.max(0, image.width - cropWidth);
+  const slackY = Math.max(0, image.height - cropHeight);
+  const panX = transform.panX || 0;
+  const panY = transform.panY || 0;
+
+  // cropX/cropY: center by default, shift by panX/panY within slack
+  const cropX = Math.max(0, Math.min(slackX / 2 + panX * slackX, slackX));
+  const cropY = Math.max(0, Math.min(slackY / 2 + panY * slackY, slackY));
 
   // Calculate scale for flip
   const scaleX = transform.flipHorizontal ? -1 : 1;
@@ -292,12 +321,45 @@ export default function PhotoElementRenderer({
   const effectFilters = getEffectFilters(effect?.type, effect?.intensity);
   const effectProperties = getEffectProperties(effect?.type, effect?.intensity);
 
+  // Full-image ghost preview coordinates (for when selected)
+  // displayScale: how many stage pixels per source-image pixel
+  const displayScale = width / cropWidth;
+  const fullImgWidth = image.width * displayScale;
+  const fullImgHeight = image.height * displayScale;
+  // Position so the crop region aligns exactly with the placeholder
+  const fullImgX = x - cropX * displayScale;
+  const fullImgY = y - cropY * displayScale;
+
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     const node = e.target;
-    onTransform({
-      x: (node.x() / pageDimensions.width) * 100,
-      y: (node.y() / pageDimensions.height) * 100,
-    });
+    // Calculate drag delta in stage pixels
+    const dragDeltaX = node.x() - x;
+    const dragDeltaY = node.y() - y;
+
+    // Reset node position back to original (element stays in place on page)
+    node.x(x);
+    node.y(y);
+
+    // Convert pixel drag to normalized pan offset
+    // Dragging right = image content shifts left = negative pan delta
+    // Scale relative to slack (available pan range in source image pixels)
+    if (slackX > 0 || slackY > 0) {
+      // Map drag pixels to source image pixels, then to normalized pan
+      // width pixels on screen = cropWidth source pixels, so ratio = cropWidth / width
+      const srcDeltaX = dragDeltaX * (cropWidth / width);
+      const srcDeltaY = dragDeltaY * (cropHeight / height);
+
+      const newPanX = slackX > 0
+        ? Math.max(-0.5, Math.min(0.5, (transform.panX || 0) - srcDeltaX / slackX))
+        : 0;
+      const newPanY = slackY > 0
+        ? Math.max(-0.5, Math.min(0.5, (transform.panY || 0) - srcDeltaY / slackY))
+        : 0;
+
+      updateElement(pageId, element.id, {
+        transform: { ...transform, panX: newPanX, panY: newPanY },
+      });
+    }
   };
 
   const handleTransformEnd = (e: Konva.KonvaEventObject<Event>) => {
@@ -320,6 +382,33 @@ export default function PhotoElementRenderer({
 
   return (
     <Group>
+      {/* Ghost image preview: show full uncropped image greyed out while mouse is pressed */}
+      {isSelected && isMouseDown && (
+        <>
+          {/* Full uncropped image at reduced opacity */}
+          <Image
+            image={image}
+            x={fullImgX}
+            y={fullImgY}
+            width={fullImgWidth}
+            height={fullImgHeight}
+            opacity={0.3}
+            listening={false}
+            perfectDrawEnabled={false}
+          />
+          {/* Dark overlay on the ghost image */}
+          <Rect
+            x={fullImgX}
+            y={fullImgY}
+            width={fullImgWidth}
+            height={fullImgHeight}
+            fill="black"
+            opacity={0.4}
+            listening={false}
+          />
+        </>
+      )}
+
       <Image
         ref={imageRef}
         id={element.id}
@@ -333,8 +422,21 @@ export default function PhotoElementRenderer({
         draggable={!element.locked}
         onClick={onClick}
         onTap={onClick}
-        onDragEnd={handleDragEnd}
+        onMouseDown={() => setIsMouseDown(true)}
+        onMouseUp={() => setIsMouseDown(false)}
+        onDragEnd={(e) => {
+          setIsMouseDown(false);
+          handleDragEnd(e);
+        }}
         onTransformEnd={handleTransformEnd}
+        onMouseEnter={(e) => {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = 'move';
+        }}
+        onMouseLeave={(e) => {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = 'default';
+        }}
         // Apply zoom via crop
         crop={{
           x: cropX,
@@ -357,6 +459,29 @@ export default function PhotoElementRenderer({
         shadowBlur={isSelected ? 10 : 0}
         shadowOpacity={isSelected ? 0.8 : 0}
       />
+
+      {/* Pan move icon - shown when selected */}
+      {isSelected && (slackX > 0 || slackY > 0) && (() => {
+        const cx = x + width / 2;
+        const cy = y + height / 2;
+        const iconR = Math.min(width, height) * 0.08;
+        const arrowLen = iconR * 0.55;
+        const arrowHead = iconR * 0.25;
+        return (
+          <Group listening={false} opacity={0.7}>
+            {/* Background circle */}
+            <Circle x={cx} y={cy} radius={iconR} fill="rgba(0,0,0,0.45)" />
+            {/* Up arrow */}
+            <Arrow points={[cx, cy - arrowLen * 0.15, cx, cy - arrowLen]} stroke="#fff" strokeWidth={iconR * 0.1} pointerLength={arrowHead} pointerWidth={arrowHead} fill="#fff" />
+            {/* Down arrow */}
+            <Arrow points={[cx, cy + arrowLen * 0.15, cx, cy + arrowLen]} stroke="#fff" strokeWidth={iconR * 0.1} pointerLength={arrowHead} pointerWidth={arrowHead} fill="#fff" />
+            {/* Left arrow */}
+            <Arrow points={[cx - arrowLen * 0.15, cy, cx - arrowLen, cy]} stroke="#fff" strokeWidth={iconR * 0.1} pointerLength={arrowHead} pointerWidth={arrowHead} fill="#fff" />
+            {/* Right arrow */}
+            <Arrow points={[cx + arrowLen * 0.15, cy, cx + arrowLen, cy]} stroke="#fff" strokeWidth={iconR * 0.1} pointerLength={arrowHead} pointerWidth={arrowHead} fill="#fff" />
+          </Group>
+        );
+      })()}
 
       {/* Render frame if enabled (v2.0) */}
       {frame?.enabled && (

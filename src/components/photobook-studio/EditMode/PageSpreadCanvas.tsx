@@ -261,8 +261,10 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
       }
     }
 
+    const defaultTransform = { zoom: 1, fit: 'cover' as const, rotation: 0, flipHorizontal: false, flipVertical: false, panX: 0, panY: 0 };
+
     if (targetPlaceholder) {
-      updateElement(targetPage.id, targetPlaceholder.id, { photoId: photo.id });
+      updateElement(targetPage.id, targetPlaceholder.id, { photoId: photo.id, transform: defaultTransform });
     } else {
       const centeredX = Math.max(0, Math.min(xPercent - defaultWidth / 2, 100 - defaultWidth));
       const centeredY = Math.max(0, Math.min(yPercent - defaultHeight / 2, 100 - defaultHeight));
@@ -277,6 +279,7 @@ export default function PageSpreadCanvas({ page }: PageSpreadCanvasProps) {
         height: defaultHeight,
         rotation: 0,
         zIndex: Date.now(),
+        transform: defaultTransform,
       };
 
       addElement(targetPage.id, photoElement);

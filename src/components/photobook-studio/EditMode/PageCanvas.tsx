@@ -210,12 +210,15 @@ export default function PageCanvas({ page }: PageCanvasProps) {
       }
     }
 
+    const defaultTransform = { zoom: 1, fit: 'cover' as const, rotation: 0, flipHorizontal: false, flipVertical: false, panX: 0, panY: 0 };
+
     // If dropped inside a placeholder, snap to it
     if (targetPlaceholder) {
       console.log(`Snapping to placeholder ${targetPlaceholder.id}`);
       // Update placeholder with photoId - keep placeholder dimensions
       updateElement(page.id, targetPlaceholder.id, {
         photoId: photo.id,
+        transform: defaultTransform,
       });
     } else {
       console.log('No placeholder found at drop point - creating new photo element');
@@ -233,6 +236,7 @@ export default function PageCanvas({ page }: PageCanvasProps) {
         height: defaultHeight,
         rotation: 0,
         zIndex: Date.now(),
+        transform: defaultTransform,
       };
 
       addElement(page.id, photoElement);

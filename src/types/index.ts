@@ -841,11 +841,13 @@ export interface StudioPhotoElement extends StudioBaseElement {
  * Studio Photo Transform - v2.0
  */
 export interface StudioPhotoTransform {
-  zoom: number;                    // 0.5 to 3.0 (50% to 300%)
-  fit: 'fill' | 'fit' | 'stretch'; // Fit mode within slot
+  zoom: number;                    // 1.0 to 3.0 (1.0 = cover fit, minimum)
+  fit: 'fill' | 'fit' | 'stretch' | 'cover'; // Fit mode within slot
   rotation: number;                // Degrees (0, 90, 180, 270)
   flipHorizontal: boolean;
   flipVertical: boolean;
+  panX: number;                    // -0.5 to 0.5 normalized pan offset (0 = centered)
+  panY: number;                    // -0.5 to 0.5 normalized pan offset (0 = centered)
 }
 
 /**
